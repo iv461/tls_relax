@@ -59,17 +59,17 @@ First, consider the truncated least squares objective for a general residual ter
 \end{equation}
 
 where $\mathbf{x}_i$ are data points and $r(\cdot)^2$ is some convex residual function such as the squared Euclidean distance $||\mathbf{x} - \mathbf{x}_i||_2^2$. In the following, we will refer to the i-th residual term $r(\mathbf{x}, \mathbf{x_i})^2$ simply as $r_i$.
-The idea of the WLS-relaxation is the observation that this function is only non-convex because of the truncation -- the residuals are convex (parabolas). Also, sums of convex functions are convex (this is the reason why ordinary least squares is a convex problem), so we can focus on making each term convex separately.
+The idea of the WLS-relaxation is the observation that this function is only non-convex because of the truncation -- the residuals are convex (parabolas). Since sums of convex functions are convex, we can focus on relaxing each term separately.
 
 For this, we first find the minimum and maximum values of each residual $r_i$ is over the given interval, denoted as $r_{min}^i$ and $r_{max}^i$ respectively. The key geometric idea of our relaxation is to reweight these residuals such that after reweighting, their maximum becomes $\epsilon^2$ and thus they are not affected by truncation (Fig. \ref{fig:wlsrelaxideawithrelax}).
 
-However, some additional special case handling is required to ensure that this relaxation becomes tight when computing over (small) intervals where the TLS objective is already convex. This is crucial to ensure that BnB converges in a finite number of iterations. First, the reweighting should only be applied to residuals where $r_{min} < \epsilon^2$, i.e., residuals that are not already outliers over the entire interval. Similarly, residuals where $r_{max} < \epsilon^2$ are inliers over the entire interval and are therefore already convex and do not need to be reweighted.
+Some additional case handling is required however to ensure that this relaxation becomes tight. This is crucial to ensure that BnB converges in a finite number of iterations. First, all residuals for which  $r_{min} \geq \epsilon^2$ holds are outliers over the entire interval and therefore constant. Similarly, residuals where $r_{max} \leq \epsilon^2$ holds are inliers over the entire interval and do not need to be reweighted.
 
-After considering these special cases, we can show that $\text{WLS}_{r}$ is a convex relaxation of \ref{eq:tls-scalar-for-wls} over a given interval:
+After considering these special cases, we can show that $\text{WLS}_{relax}$ is a convex relaxation of \ref{eq:tls-scalar-for-wls} over a given interval:
 \begin{equation}
 	\label{eq:tls-wls-relaxation1}
 	\begin{aligned}	
-		\text{WLS}_{r} &= 
+		\text{WLS}_{relax} &= 
 		\sum_{i=1}^{N} (1 - o_i) \left(w_i r_i  + (1 - w_i) r_{min}^i \right) + \sum_{i=1}^{N} o_i\epsilon^2\\
 	\end{aligned}
 \end{equation}
@@ -241,9 +241,13 @@ Where $\Delta\mathbf{R}$ is the rotation relative to the node's center and $\mat
 	\end{aligned}
 \end{equation}
 
-The unconstrained version of this problem is known as the \textit{Wahba-problem} for which a simple SVD-algorithm exists \cite{Kabsch-1978-Point-set-alignment} \cite{Lawrence2019APA} \cite{Least-squares-estimation-point-sets-Umeyama-1991}. This problem however is modified and has additionally an inequality-constraint. We show that this problem can be solved computationally very efficient using a custom active-set solver.
+The unconstrained version of this problem is known as the \textit{Wahba-problem} for which a simple SVD-algorithm exists \cite{Kabsch-1978-Point-set-alignment} \cite{Lawrence2019APA} \cite{Least-squares-estimation-point-sets-Umeyama-1991}. Our problem however has additionally an inequality-constraint. It still can be solved computationally very efficient using a custom active-set solver.
 
-The idea of the active set method is based on the observation that every inequality constraint can either be ignored or is satisfied as an equality (also called complementary slackness condition) \cite[Ch.15 p.424-427]{Numerical-Optimization-Nocedal-Wright}. We therefore first solve the problem using the SVD algorithm and thereby ignoring the constraint. Then, we simply check whether the constraint is satisfied. If yes, we already have found the solution. If not, we know that we need to find a 3D rotation that has a rotation angle equal to $n_r$. By the Euler theorem, every 3D rotation can be described as a rotation around a single axis and an single angle. Because we know that the rotation angle needs to be $n_r$, we therefore only need to find the rotation axis.
+The idea of the active set method is based on the observation that every inequality constraint can either be ignored or is satisfied as an equality (also called complementary slackness condition) \cite[Ch.15 p.424-427]{Numerical-Optimization-Nocedal-Wright}. We therefore first solve the problem using the SVD algorithm and thereby ignore the constraint. Then, we simply check whether the constraint is satisfied. If yes, we already have found the solution. If not, we know that we need to find a 3D rotation that has a rotation angle equal to $n_r$. By the Euler theorem, every 3D rotation can be described as a rotation around a single axis and an single angle. Because we know that the rotation angle needs to be $n_r$, we therefore only need to find the rotation axis.
+
+Our active-set solver for finding the global minimum of the WLS-relaxation over rotations is is overall very efficient. The only computationally intensive operation is computing the $3 \times 3$ cross-correlation matrix that is needed first by the SVD algorithm. It has a linear runtime in the number of points. All the operations that follow are based on this $3 \times 3$ matrix and therefore have a constant runtime (i.e. independent of the number of points).
+This solver is novel to our knowledge -- the problem of solving the Wahba-problem with inequality-constrained angle has not been proposed in the literature before.
+
 
 \subsubsection{Solving the equality-constrained case}
 In the equality-constrained case of the active-set solver, we need to find a 3D rotation with a rotation angle of exactly $n_r$:
@@ -269,7 +273,3 @@ We show that this optimization problem is equivalent to the following problem ov
 The data matrices $\mathbf{A}$ and $\mathbf{g}$ depend on the points $\mathbf{a}_i$ and $\mathbf{b}_i$ and the angle constraint $n_r$. A definition is given in the Appendix \ref{thm:constrained-wahba-davenport}.
 
 To solve this non-convex optimization problem \ref{eq:eq-constrained-prob-ev} over the sphere, we use the algorithm proposed in \cite{10.1007/978-3-642-75536-1_57}. We perform overall two steps: We first need to compute the eigenvalue decomposition  $\mathbf{A} = \mathbf{Q}\mathbf{\Lambda}\mathbf{Q}^\transposed$ and then need to find the rightmost root of a certain rational function (a characteristic polynomial). This can be done in practice very fast, yielding a constant time algorithm.
-
-
-Our active-set solver for finding the global minimum of the WLS-relaxation over rotations is is overall very efficient. The only computationally intensive operation is computing the $3 \times 3$ cross-correlation matrix that is needed first by the SVD algorithm. It has a linear runtime in the number of points. All the operations that follow are based on this $3 \times 3$ matrix and therefore have a constant runtime (i.e. independent of the number of points). (For example, the eigen-decomposition (line 3) takes only around $10 \mu s$ while the computation of the cross-correlation matrix requires aroundd $500 \mu s$ for 10k points.)
-This solver is novel to our knowledge -- the problem of solving the Wahba-problem with inequality-constrained angle has not been proposed in the literature before.

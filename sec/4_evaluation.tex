@@ -2,10 +2,9 @@
 \section{Experimental evaluation}
 \label{sec:evaluation}
 In this section we evaluate our Branch and Bound solver that uses our novel convex relaxation on point cloud registration and related outlier robust problems. 
-We measure the required number of iterations as well as the per-iteration costs. We have implemented a simple version of a best-first Branch-and-Bound \cite{10.1007/978-3-642-37444-9_42}.
+We measure the required number of iterations as well as the per-iteration costs. For this we have implemented a simple version of a best-first Branch-and-Bound as in \cite{10.1007/978-3-642-37444-9_42}.
 
 We also have validated the corecteness of the algorithm and it's implementation empirically: We did not find any instance in which it did not find the global minimum of the TLS problem.
-
 
 We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32GiB of RAM.
 
@@ -24,7 +23,7 @@ We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32Gi
 	\begin{adjustbox}{width=1.\linewidth}
 		\includegraphics{figures/robust_wahba_runtime_rotation_error.pdf}
 	\end{adjustbox}
-	\caption{Der durchschnittliche Rotationsfehler in Abhängigkeit vom Anteil der Ausreißer: Unsere Methode bleibt robust bis zu 95\% Ausreißer, wie von der Truncated Least Squares Formulierung zu erwarten ist.}
+	\caption{Rotation-only experiments: The average rotation error over the ourlier rate: The Truncated Least Squares method is robust up to 95\% outliers.}
 	\label{fig:rotation-error-over-outlier-rate}
 \end{figure}
 
@@ -34,7 +33,7 @@ We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32Gi
 	\begin{adjustbox}{width=1.\linewidth}
 		\includegraphics{figures/robust_wahba_runtime_execution_time.pdf}
 	\end{adjustbox}
-	\caption{Die durchschnittliche Ausführungszeit von Branch-and-Bound in Abhängigkeit von der Gesamtzahl der Punkte $N$ des Optimierungsproblems.}
+	\caption{Average runtime of our Branch-and-Bound solver depending on the total amount of point correspondences $N$.}
 	\label{fig:runtime}
 \end{figure}
 

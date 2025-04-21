@@ -1,7 +1,8 @@
 \begin{abstract}
 Outlier-robust point cloud registration where correspondences are given but up to 90\% of them may be outliers is commonly formulated as as the \textit{Maximum Consensus} (MC) or \textit{Truncated Least Squares} (TLS) optimization problem.
-This formulation has been shown to be very robust to outliers but actually solving the underlying combinatorial optimization problem exactly, i.e. with global optimality guarantee, remains challenging. Approaches using semidefinite relaxations are not well scalable albeit running in polynomial time and instead have a runtime on the order of hundreds of seconds for 100 points. O
+This formulation has been shown to be very robust to outliers but actually solving the underlying combinatorial optimization problem exactly, i.e. with global optimality guarantee, remains challenging. Approaches using semidefinite convex relaxations albeit running in polynomial time do not scale well and instead have a runtime on the order of hundreds of seconds for 100 points. 
 
-We propose a new convex relaxation that runs in linear time and can be used in combination with Branch-and-Bound. We present results on synchetic data for the rotation-only (Wahba) problem and translation problem separately.
+We propose a new convex relaxation that runs in linear time and can be used in combination with Branch-and-Bound. It is two orders of magnitude faster when solving the rotation-only problem compared to state-of-the-art SDP solver STRIDE. 
+We present results on synthetic data for the rotation-only (Wahba) problem and translation problem separately.
 
 \end{abstract}
