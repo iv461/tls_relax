@@ -215,7 +215,7 @@
 			\text{subject to} \quad &d_{\angle}(\mathbf{I}, \Delta\mathbf{R}) = n_r
 		\end{aligned}
 	\end{equation}
-	where the angle of rotation is constrained to $n_r$ is equivalent to the following optimization problem over the rotation axis $\mathbf{n}$:
+	where the angle of rotation is constrained equal to $n_r$ is equivalent to the following optimization problem over the rotation axis $\mathbf{n}$:
 	\begin{equation}
 		\label{eq:rot-est-constrained-qcqp}
 		\begin{aligned}
@@ -227,17 +227,17 @@
 	\begin{equation}
 		\label{eq:ev-constr-data-mat-a}
 		\begin{aligned}
+			\mathbf{A} &= \sin^2 \left(\frac{n_r}{2} \right) \mathbf{C}, \quad \mathbf{g} =  \sin \left(\frac{n_r}{2} \right) \cos \left(\frac{n_r}{2} \right) \mathbf{z}\\
+			\mathbf{C} &= \mathbf{B} + \mathbf{B}^\transposed\\
 			\mathbf{B} &= \sum_{i=1}^N w_i \mathbf{a}_i\mathbf{b}_i^\transposed \in \Rone^{3 \times 3}, \quad
-			\mathbf{z} = \sum_{i=1}^N w_i [\mathbf{a}_i]_{\times}\mathbf{b}_i \in \Rone^{3}, \quad \mathbf{C} = \mathbf{B} + \mathbf{B}^\transposed\\
-			\mathbf{A} &= \sin^2 \left(\frac{n_r}{2} \right) \mathbf{C}, \quad \mathbf{g} =  \sin \left(\frac{n_r}{2} \right) \cos \left(\frac{n_r}{2} \right) \mathbf{z}
+			\mathbf{z} = \sum_{i=1}^N w_i [\mathbf{a}_i]_{\times}\mathbf{b}_i \in \Rone^{3}
 		\end{aligned}
 	\end{equation}
 \end{theorem}
 
 \begin{proof}
 	
-	We first separate the optimization over the rotation axis and angle. For this, we use the quaternion representation of \ref{eq:tls-rwls-a}. One can show that the problem \ref{eq:tls-rwls-a} is equivalent to:
-	
+	The problem \ref{eq:tls-rwls-a} without the equality constraint (i.e. the Wahba problem) can be stated equivalently using quaternions as:
 	\begin{equation}
 		\label{eq:davenports-q-problem}
 		\begin{aligned}
@@ -245,16 +245,7 @@
 			\text{subject to} &\quad  ||\mathbf{q}|| = 1
 		\end{aligned}
 	\end{equation}
-	
-	where $\mathbf{q}$ is a 4-dimensional vector representing the quaternion of rotation and $\mathbf{K} \in \Rone^{4\times4}$ is a data matrix. This optimization problem is known as the \textit{Davenport's q-method}. The quaternion can be written in axis-angle form as:
-	
-	\begin{equation}
-		\label{eq:q-axis-angle}
-		\begin{aligned}
-			\mathbf{q} = \left( \sin \left( \frac{\theta}{2} \right) \mathbf{n}, \cos \left(\frac{\theta}{2} \right) \right)^\transposed
-		\end{aligned}
-	\end{equation}
-	i.e. the first three elements are the unit-vector $\mathbf{n} \in \Rthree, ||\mathbf{n}|| = 1$ of the axis of rotation multiplied by $\sin \left( \frac{\theta}{2} \right)$, while the fourth element is just $\cos \left(\frac{\theta}{2} \right)$ and $\theta$ is the angle of rotation.
+	where $\mathbf{q}$ is the quaternion and $\mathbf{K} \in \Rone^{4\times4}$ is a data matrix.
 	The data matrix $\mathbf{K}$ has the following block-structure:
 	
 	\begin{equation}
@@ -283,9 +274,17 @@
 		\end{aligned}
 	\end{equation}
 	
-
+	where the matrices $\mathbf{C}$ and $\mathbf{z}$ are defined as in the theorem \ref{eq:ev-constr-data-mat-a}. 
+	We can separate now the optimization over the rotation axis and angle using the following definition:
 	
-	We can rewrite the objective function $\mathbf{q}^\transposed \mathbf{K} \mathbf{q}$  of \ref{eq:davenports-q-problem} using the blocks of the block-matrix $\mathbf{K}$: 
+	\begin{equation}
+		\label{eq:q-axis-angle}
+		\begin{aligned}
+			\mathbf{q} = \left( \sin \left( \frac{\theta}{2} \right) \mathbf{n}, \cos \left(\frac{\theta}{2} \right) \right)^\transposed
+		\end{aligned}
+	\end{equation}
+	where $\mathbf{n}$ is a unit-vector that is the axis of rotation and $\theta$ is the angle of rotation.
+	We rewrite the objective function $\mathbf{q}^\transposed \mathbf{K} \mathbf{q}$  of \ref{eq:davenports-q-problem} using the blocks of the block-matrix $\mathbf{K}$: 
 	
 	\begin{equation}
 		\label{eq:dv-q-rew}
@@ -295,9 +294,7 @@
 		\end{aligned}
 	\end{equation}
 	
-	We now have a scalar term where the axis $\mathbf{n}$ and the angle $\theta$ occur separately and with this we can formulate the optimization problem over the axis. By setting $\theta = n_r$ and solving only over $\mathbf{n}$ we can therefore solve the equality-constrained problem \ref{eq:tls-rwls-a}.
-	
-	Since the term $ \cos^2 \left(\frac{\theta}{2} \right) \trace(\mathbf{C})$ is constant in Eq. \ref{eq:dv-q-rew}, it does no affect the minimizer and we will leave it out. 
-	By defining the data-matrices as in \ref{eq:ev-constr-data-mat-a}, we immediatelly see that the problem 
-	\ref{eq:rot-est-constrained-qcqp} is equivalent to Davenports Q-problem \ref{eq:davenports-q-problem} and therefore equivalent to \ref{eq:tls-rwls-a}, concluding the proof.
+	Now the axis $\mathbf{n}$ and the angle $\theta$ occur separately. 
+	By the equality constraint, $\theta$ is already given as $\theta = n_r$. Then, the term $ \cos^2 \left(\frac{\theta}{2} \right) \trace(\mathbf{C})$ in Eq. \ref{eq:dv-q-rew} is constant and does not affect the minimizer, we will therefore omit it. 
+	 By defining the data-matrices $\mathbf{A}$ and $\mathbf{g}$ as in the theorem \ref{eq:ev-constr-data-mat-a}, we see that the objective function of Eq. \ref{eq:rot-est-constrained-qcqp} is equivalent to Davenports' problem \ref{eq:davenports-q-problem} and therefore equivalent to \ref{eq:tls-rwls-a}, concluding the proof.
 \end{proof}	
