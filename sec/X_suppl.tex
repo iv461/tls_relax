@@ -38,7 +38,7 @@
 \begin{theorem}
 	The residual term $r_i = ||\mathbf{a}_i - \mathbf{b}_i + \mathbf{t}||_2^2$
 	has the minimum $r_{min}^i = \max(0, ||\mathbf{d}||_2 - n_r)^2$ and the maximum $r_{max}^i = (||\mathbf{d}||_2 + n_r)^2$
-	for any translation $\mathbf{t} \in \Rthree, ||\mathbf{c} - \mathbf{t}|| \leq n_r$ where $\mathbf{d} = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}$.
+	for any translation $\mathbf{t} \in \Rthree$ and $||\mathbf{c} - \mathbf{t}|| \leq n_r$ where $\mathbf{d} = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}$.
 \end{theorem}
 
 \begin{proof}
@@ -135,7 +135,7 @@
 		\end{aligned}
 	\end{equation}
 	
-	where $\mathbf{x}_i$ are data points and $r_i = r(\cdot)^2$ are residual terms convex in $\mathbf{x}$. Given are the minimum and maximum value of each residual term $r_i$ over every $\mathbf{x} \in \mathcal{X}$, denoted as $r_{min}^i$ and $r_{max}^i$ respectively. Then, $\text{WLS}_{r}$ is a convex relaxation of \ref{eq:tls-t-opt-branch2} over $\mathcal{X}$:
+	where $\mathbf{x}_i$ are data points and $r(\mathbf{x}, \mathbf{x}_i)^2 = r_i$ are residual terms convex in $\mathbf{x}$. Given are the minimum and maximum value of each residual term $r_i$ over every $\mathbf{x} \in \mathcal{X}$, denoted as $r_{min}^i$ and $r_{max}^i$ respectively. Then, $\text{WLS}_{r}$ is a convex relaxation of \ref{eq:tls-t-opt-branch2} over $\mathcal{X}$:
 	\begin{equation}
 		\label{eq:tls-wls-relaxation}
 		\begin{aligned}	

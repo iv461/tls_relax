@@ -2,19 +2,18 @@
 \section{Problem formulation}
 The problem is to compute a 3D-transform $(\MR^*, \vt^*) \in \SEthree$ that optimally aligns two point sequences $\mathcal{P} = \left(\vp_1, ..., \vp_N\right), \mathcal{Q} = \left(\vq_1, ..., \vq_N\right) \in \RthreeByN$ of noisy measurements. We know the correspondences between points ($\vp_i$ and $\vq_i$), but a large fraction (up to 95\%) can be outliers, as it is typical for feature-based matching methods.
 \subsection{The Truncated Least Squares problem}
-The Truncated Least Squares (TLS) problem is a least squares esitmation problem where residuals are truncadet above a threshold. (It is similar to the Maximum Consensus problem but additionally considers the residual values, obtaining slightly better estimates.)
-Outliers are handled by truncating residuals above a threshold $\epsilon^2$, yielding the \textit{Truncated Least Squares} (TLS) problem:
-
 \begin{figure}[!ht]
 	\centering
 	\begin{adjustbox}{width=1.\linewidth}
 		\input{figures/tls_cost_many_term.pgf}
 	\end{adjustbox}
-	\caption{The non-convex Truncated least-squares (TLS) Funktion with multiple local minima.Shown is the function  $\sum_{i=1}^{N}\min((x - y_i)^2, \epsilon^2)$ for $\epsilon^2=0.1$, and nine $y_i$'s (gray lines).}
+	\caption{The non-convex Truncated least-squares (TLS) function with multiple local minima.Shown is the function  $\sum_{i=1}^{N}\min((x - y_i)^2, \epsilon^2)$ for $\epsilon^2=0.1$, and nine $y_i$'s (gray lines).}
 	\label{fig:tlscostmulterm}
 \end{figure}
 
-Die truncated least squares Funktion ist eine Funktion der Form: 
+The Truncated Least Squares (TLS) problem is a least squares estimation problem where residuals are truncated above a threshold. (It is similar to the Maximum Consensus problem but additionally considers the residual values, obtaining slightly better estimates.)
+Outliers are handled by truncating residuals above a threshold $\epsilon^2$, the objective function is therefore:
+
 
 \begin{equation}
 	\begin{aligned}
@@ -98,9 +97,146 @@ and the binary variables $o_i$ deciding whether the $i$-th residual is an outlie
 
 For a proof of this WLS-relaxation, see \ref{proof:tls-convex-wls-relaxation}.
 
+\subsection{Interval analysis of residuals}
+
+In the following we show how $r_{min}$ and $r_{max}$ can easily be computed analytically for different models (i.e. translation and rotation), given spherical intervals, i.e. balls.
+
+The minimum $r_{min}^i$ and maximum $r_{max}^i$ of the residual $r_i =||\mathbf{a}_i - \mathbf{b}_i + \mathbf{t}||_2^2$ (translation) over a ball with center $\mathbf{c}$ and radius $n_r$ are: (see \ref{proof:tls-relax-minmax-r} for a proof):
+
+\begin{equation}
+	\begin{aligned}	
+		r_{min}^i &= \max(0, ||\mathbf{d}_i||_2 - n_r)^2\\
+		r_{max}^i &= (||\mathbf{d}_i||_2 + n_r)^2
+	\end{aligned}
+\end{equation}
+
+with $\mathbf{d}_i$ defined as: 
+
+\begin{equation}
+	\begin{aligned}	
+		\mathbf{d}_i = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}
+	\end{aligned}
+\end{equation}
+
+Similarly, for the rotation residual $||\mathbf{a}_i - \mathbf{R}\mathbf{b}_i ||_2^2$ over a over a ball with center $\mathbf{R}_c$ and (geodesic) radius $n_r$ they are (see \ref{proof:wls-interval-analysis-rotation} for a proof): 
+
+\begin{equation}
+	\label{eq:residual-minmax-rotation}
+	\begin{aligned}
+		r_{min}^i = ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\max(\theta - n_r, 0))\\
+		r_{max}^i = ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\min(\theta + n_r, \pi))
+	\end{aligned}
+\end{equation}
+
+where $\theta$ is the angle between $\mathbf{R}_c^\transposed \,\mathbf{a}_i$ and $\mathbf{b}_i$:
+
+\begin{equation}
+	\begin{aligned}
+		\theta = \arccos \left( \frac{(\mathbf{R}_c^\transposed \, \mathbf{a}_i )^\transposed \mathbf{b}_i}{|| \mathbf{a}_i || \, || \mathbf{b}_i ||} \right)
+	\end{aligned}
+\end{equation}
+
+Computing these intervals requires constant time and is in practice very fast when using trigonometric identities to elimitade the the need for evaluating the cosine function.
+
+
+\section{Minimizing the WLS convex relaxation}
+After having computed the WLS relaxation (i.e. the weights), we need to minimize it to obtain a lower bound on the TLS objective. 
+Since the relaxation is a simple weighted least squares function, minimizing it is rather easy. The only thing we need to consider is that we seek the minimum that is inside the Branch and Bound node. We therefore need to introduce an inequality constraint into the problem.
+This constrained problem can be solved can still be solved very efficiently by utilizing custom active-set solvers that are only slightly more expensive than solving the least-squares problem.
+
+\subsection{Minimizing the WLS-relaxation over translations}
+
+To minimize the WLS-relaxation over the translation $\mathbf{t}$ for obtaining the lower bound over the ball with center $\mathbf{c}$ and radius $n_r$, we need to solve the following optimization problem:
+\begin{equation}
+	\label{eq:tls-twls-constrained}
+	\begin{aligned}
+		\argmin_{\mathbf{x} \in \Rone^3} \quad &\sum_{i=1}^{N} w_i ||\mathbf{d}_i - \mathbf{x}||_2^2 \\
+		\text{subject to} \quad  &||\mathbf{x}||_2 \leq n_r
+	\end{aligned}
+\end{equation}
+
+where 
+\begin{equation}
+	\begin{aligned}
+		\mathbf{x} = \mathbf{c} - \mathbf{t}  \iff  \mathbf{t} = \mathbf{c} - \mathbf{x}\\
+		\mathbf{d}_i = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}
+	\end{aligned}
+\end{equation}
+
+The constraint $||\mathbf{x}||_2 \leq n_r$ ensures that the found $\mathbf{x}$ is inside the BnB node. The other sums of the convex relaxation \ref{eq:tls-wls-relaxation1} disappeared because they are constant (i.e. they do not depend on $\mathbf{x}$). This problem is a convex QCQP and therefore solvable by any standard QCQP solver. However, we show that the solution can be obtained even more easily in closed form, which in practice results in a much faster algorithm.
+
+We first form the Lagrangian to account for the constraint (which is squared): 
+
+\begin{equation}
+	\begin{aligned}	
+		L(\mathbf{x}, \lambda) =  \sum_{i=1}^{N} w_i ||\mathbf{d}_i - \mathbf{x}||_2^2 + \lambda (
+		\mathbf{x}^\transposed \mathbf{x} - n_r^2)\\
+	\end{aligned}
+\end{equation}
+
+then, we set the first partial derivatives to zero: 
+\begin{equation}
+	\begin{aligned}	
+		\frac{\partial L}{\partial \mathbf{x}} &= \frac{\partial }{\partial \mathbf{x}} \left( \sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right)^\transposed \left(\mathbf{d}_i - \mathbf{x}\right) + \lambda (
+		\mathbf{x}^\transposed \mathbf{x} - n_r^2) \right)\\
+		&= - 2\sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right) + 2 \lambda \mathbf{x}\\
+		&= \mathbf{0}\\
+	\end{aligned}
+\end{equation}
+
+
+By rearranging, we can obtain therefore the solution in closed form:
+\begin{equation}
+	\label{eq:trans-qcqp-lagrangian}
+	\begin{aligned}	
+		-2  &\sum_{i=1}^{N}  w_i \left(\mathbf{d}_i - \mathbf{x}\right) + 2 \lambda \mathbf{x} = \mathbf{0}\\
+		\iff \lambda \mathbf{x} &= \sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right)\\
+		\lambda \mathbf{x} &= \sum_{i=1}^{N}  w_i \mathbf{d}_i  - \sum_{i=1}^{N}  w_i \mathbf{x}\\
+		\lambda \mathbf{x} &= \sum_{i=1}^{N}  w_i \mathbf{d}_i  - \mathbf{x} \sum_{i=1}^{N}  w_i\\
+		\left( \lambda + \sum_{i=1}^{N}  w_i \right) \mathbf{x} &= \sum_{i=1}^{N} w_i \mathbf{d}_i \\
+		\mathbf{x} &= \frac{1}{\lambda + \sum_{i=1}^{N}  w_i} \sum_{i=1}^{N} w_i \mathbf{d}_i 
+	\end{aligned}
+\end{equation}
+
+Now the Karush-Kuhn-Tucker (KKT) conditions require $\lambda \geq 0$ and $\lambda (
+\mathbf{x}^\transposed \mathbf{x} - n_r^2) = 0$ in addition to satisfying the constraint, i.e. $|| \mathbf{x}||_2 \leq n_r$. It follows that in practice we obtain the optimum by first computing $\mathbf{x}$ with Eq. \ref{eq:trans-qcqp-lagrangian}, assuming $\lambda = 0$. Then we check whether the inequality constraint is satisfied, i.e. whether $|| \mathbf{x}||_2 \leq n_r$ holds, and if not, we simply normalise the vector so that $|| \mathbf{x}||_2 = n_r$. This gives us the optimal solution vector. Intuitively, from eq. \ref{eq:trans-qcqp-lagrangian} we already see that the direction of the vector does not change regardless of the optimal Lagrange multiplier $\lambda$ since it is only a scalar factor.  
+
+This optimization problem can be understood as a special case of the Trust Region Problem for which strong duality holds \cite[Ch. 5.2, p.229]{Boyd_Vandenberghe_2004} as well as a regularized linear regression problem.
+
+
+
+\subsection{Minimizing the WLS-relaxation over rotations}
+
+To minimize the convex relaxation over rotations and obtain a lower bound for given BnB-node that is a ball with center $\mathbf{R_c}$ and (geodesic) radius $n_r$, we need to solve the following optimization problem:
+
+\begin{equation}
+	\label{eq:tls-rwls}
+	\begin{aligned}
+		\argmin_{\Delta \mathbf{R} \in \SOthree}  \quad &\sum_{i=1}^{N} w_i ||\mathbf{R}_c^\transposed \mathbf{a}_i - \Delta\mathbf{R} \mathbf{b}_i ||_2^2 \\
+		\text{subject to} \quad &d_{\angle}(\mathbf{I}, \Delta\mathbf{R}) \leq n_r
+	\end{aligned}
+\end{equation}
+
+Where $\Delta\mathbf{R}$ is the rotation relative to the node's center: 
+
+\begin{equation}
+	\begin{aligned}
+		\Delta\mathbf{R} = \mathbf{R_c}^\transposed\mathbf{R} \iff \mathbf{R_c}\Delta\mathbf{R} = \mathbf{R}
+	\end{aligned}
+\end{equation}
+
+The unconstrained version of this problem is known as the \textit{Wahba-problem} for which a simple SVD-algorithm exists, known as the Kabsch-Umeyama algorithm \cite{Kabsch-1978-Point-set-alignment} \cite{Least-squares-estimation-point-sets-Umeyama-1991} \cite{Lawrence2019APA}. But this problem is modified and has in addition an inequality-constraint. In the following, we develop a custom solver that solves this problem very efficiently. 
+
+The first idea is to just try to solve the unconstrained version and check whether it satisfies the inequality constraint (i.e. the solution is inside the ball). 
+We can do that, but unfortunately the solution does not always satisfy the inequality constraint. We gain however an important insight: If the solution satisfies the constraint and lies therefore in the spherical region, we have already found the optimum of the constrained problem. If however the optimum of the unconstrained problem is outside of the region, the optimal solution to the constrained problem has to lie on the border of the region. It then has to satisfy the constraint as an equality, i.e. $ d_{\angle}(\mathbf{I}, \Delta\mathbf{R})  = n_r$ \cite[Ch.15 p.424-427]{Numerical-Optimization-Nocedal-Wright}.
+This two-stage method for solving inequality-constrained nonlinear problems is known as the \textit{active-set} method \cite[Ch. 16.5, p.467]{Numerical-Optimization-Nocedal-Wright}, an inequality constraint is set to be active if the solution satisfies it as an equality. 
+
+Using this active-set approach, we can effectively solve this inequality-constrained optimization problem, since we already have the SVD-algorithm for the unconstrained case. And for equality-constrained case, we make the observation that by Euler's theorem that says that every 3D-rotation can be separated into a n axis and angle, we only have to optimize over the axis when the angle is equality-constrained and therefore fixed.
+
+As an algorithm outline, we therefore first solve the unconstrained problem with the SVD-algorithm and check whether it satisfies the inequality-constraint. If not, we solve for the equality-constrained problem where we seek for the rotation that has the rotation angle $n_r$, that is more difficult case.
+
 
 \subsection{Solving the equality-constrained case}
-
 
 If the inequality-constraint is not satisfied after the first unconstrained solve, we need to solve the problem with equality-constraint, that is the following optimization problem: 
 
