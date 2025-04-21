@@ -1,11 +1,13 @@
 
-\section{Experiments}
-In this section, we present experiments where we study the intersection graphs arising from the robust point cloud registration problem. We evaluate the runtime of state-of-the-art maximum clique finding algorithms.
-
+\section{Experimental evaluation}
 \label{sec:evaluation}
-We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32GiB of RAM.
-\subsection{Synthetic experiments}
+In this section we evaluate our Branch and Bound solver that uses our novel convex relaxation on point cloud registration and related outlier robust problems. 
+We measure the required number of iterations as well as the per-iteration costs. We have implemented a simple version of a best-first Branch-and-Bound \cite{10.1007/978-3-642-37444-9_42}.
 
+We also have validated the corecteness of the algorithm and it's implementation empirically: We did not find any instance in which it did not find the global minimum of the TLS problem.
+
+
+We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32GiB of RAM.
 
 \subsection{Synthetic experiments}
 \begin{figure}[!ht]
@@ -16,7 +18,30 @@ We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32Gi
 	\label{fig:execution-time-over-outlier-rate}
 \end{figure}
 
-We generate synthetic point clouds by sampling inliers from a unit cube $s \cdot [-1, 1]^3$ with scale $s$. We add uniform measurement noise by sampling a ball of radius $\epsilon^2$, and then sample outliers in the bounding box of the inliers, also uniformly. First, we set $s=10$ and $\epsilon=0.5$. As shown in Fig. \ref{fig:execution-time-over-outlier-rate}, the runtime is very low for $N =100$ and decreases until 90\% outlier-rate because the graph sparsity increases. Above 90\% outlier-rate, it increases because the number of visited cliques increases.
+
+\begin{figure}[!ht]
+	\centering
+	\begin{adjustbox}{width=1.\linewidth}
+		\includegraphics{figures/robust_wahba_runtime_rotation_error.pdf}
+	\end{adjustbox}
+	\caption{Der durchschnittliche Rotationsfehler in Abhängigkeit vom Anteil der Ausreißer: Unsere Methode bleibt robust bis zu 95\% Ausreißer, wie von der Truncated Least Squares Formulierung zu erwarten ist.}
+	\label{fig:rotation-error-over-outlier-rate}
+\end{figure}
+
+
+\begin{figure}[!ht]
+	\centering
+	\begin{adjustbox}{width=1.\linewidth}
+		\includegraphics{figures/robust_wahba_runtime_execution_time.pdf}
+	\end{adjustbox}
+	\caption{Die durchschnittliche Ausführungszeit von Branch-and-Bound in Abhängigkeit von der Gesamtzahl der Punkte $N$ des Optimierungsproblems.}
+	\label{fig:runtime}
+\end{figure}
+
+
+We generate synthetic point clouds by sampling inliers from a unit cube $s \cdot [-1, 1]^3$ with scale $s$. We add uniform measurement noise by sampling a ball of radius $\epsilon^2$, and then sample outliers in the bounding box of the inliers, also uniformly. First, we set $s=10$ and $\epsilon=0.5$. As shown in Fig. \ref{fig:execution-time-over-outlier-rate}, the runtime is very low for $N =100$.
+
+The results of the rotation error as a function of the outlier rate are shown in Fig. \ref{fig:rotation-error-over-outlier-rate} is shown. The estimation remains correct with a small error of less than $1$ degree. We also investigated the scalability of our method over the total number of points $N$. As the results in Fig. \ref{fig:runtime} show, our approach can even be used for real-time applications with a runtime of less than 100 milliseconds.
 
 \subsubsection{Scalability}
 \begin{figure}[!ht]
@@ -29,8 +54,8 @@ We generate synthetic point clouds by sampling inliers from a unit cube $s \cdot
 We evaluate the scalability on synthetic data at $75\%$ outlier-rate, results are shown in Fig \ref{fig:execution-time-over-n}. Our solves is efficient since it implicitly prunes vertices based on the TLS objective.
 
 \subsubsection{Validity of the global optimality certificate}
-Even though GNC is a heuristic, based on our case analysis (Sec. \ref{sec:branching-over-comb}) it seems likely that GNC finds global minimum under certain conditions.
-We therefore test on synthetic data whether the global optimality certificate is valid, i.e. whether at termination, the lower bound is less or equal than the TLS objective at the ground-truth solution.
+
+We test on synthetic data whether the global optimality certificate is valid, i.e. whether at termination, the lower bound is less or equal than the TLS objective at the ground-truth solution.
 We define the suboptimality $\eta$ of the solution based on the upper bound (UB), that is, the best known solution, and the lower bound (LB) \cite{9785843}
 \begin{equation}
 	\begin{aligned}    
@@ -45,8 +70,8 @@ We test with $N=100$, $\epsilon=0.5$ and vary the data scale $s$ from 3 to 100. 
 	\caption{Amount of instances with valid global optimality certificate (i.e. valid suboptimality) on synthetic data, including achieved $\eta$-suboptimality.}
 	\label{fig:cert-validity}
 \end{figure}
-The results are shown in Fig. \ref{fig:cert-validity}, we clearly see that with a larger data scale, the likelihood of a valid certificate (and successful registration result) increases. While this observation alone could be explained solely by the solver being able to solve the problem more likely, we also see that the suboptimality increases for instances above 90\% outliers. This indicates that our solver is able to detect that some instances could not be solved to global optimality.
-Unfortunately, being only able to reject some and not all instances means our solver is currently neither globally optimal (being able to find the global minimum of every instance and outputting a valid lower bound on every instance), nor certifiable (outputting only a valid lower bound on every instance).
+
+TODO 
 
 \subsubsection{Comparison with SDP-relaxation solver STRIDE} Currently the only solver that can solve the TLS registration problem of size $N=100$ to proven global optimality is STRIDE \cite{9785843}. We compare it on our synthetic data to access the achieved suboptimality and estimation errors. We use the public MATLAB-implementation of the authors and use the MOSEK solver for the chordal initialization of STRIDE.
 We set $\epsilon = 0.5$, $N=30$ and perform three trials per outlier rate.
@@ -79,48 +104,3 @@ We evaluate our method on the KITTI odometry dataset \cite{Kitti-Geiger2013IJRR}
 We sub-sample the correspondeces to 500 and set the inlier-threshold to $\epsilon = 0.6$. We set a time limit of 100 milliseconds. The FCGF \cite{9009829} descriptor has on average an outlier-rate of 75\%, while the FPFH has usually above 90\% outlier-rate. For the other methods, we report the results from \cite{zhang20233d} since the test setup is identical. The results are shown in Tab. \ref{tab:eval-kitti}, our method achieves comparable results to other state-of-the-art methods without dataset-specific tuning of parameters, outperformed only by MAC and SC$^2$-PCR.
 
 
-
-
-\section{Experimentelle Evaluation}
-
-In diesem Abschnitt wird die vorgeschlagene konvexe Relaxierung evaluiert hinsichtlich ihres Rechenaufwands und der Qualität. Wir messen die Qualität anhand der Anzahl der Iterationen, die Branch-and-Bound (BnB) benötigt, um zu terminieren. Zu diesem Zweck haben wir einen einfache Variante von best-first-BnB implementiert, so wie in \cite{10.1007/978-3-642-37444-9_42}.
-
-Wir haben die Methode in C++ unter Verwendung der \textit{Eigen}\footnote{https://eigen.tuxfamily.org/} Matrix-Bibliothek implementiert. Wir haben die Implementierung so optimiert, dass die Auswertung trigonometrischer Funktionen durch die Verwendung trigonometrischer Identitäten entfällt. Auf diese Weise erfordert die Berechnung der WLS-Relaxierung nur elementare Berechnungen und eine Quadratwurzel-Berechnung pro Punkt.
-Unsere Implementierung verwendet keine Parallelisierung.
-Wir messen die Gesamtzeit für BnB und definieren die $y$-Suboptimalität $y_{subopt}$ als die Suboptimalität des Wertes der Zielfunktionen basierend auf der aktuellen unteren (LB) und oberen Schranke (UB) von BnB \cite{Misener2013}:
-
-
-\begin{align}
-	y_{subopt} = \frac{\text{UB} - \text{LB}}{|\text{LB}|}
-\end{align}
-
-Wir setzen die Bedingung für Terminierung von BnB bei $y_{subopt} < 10^{-4}$ so wie in \cite{Misener2013}.
-Wir haben die Experimente auf einem PC mit Intel i7-12700K-CPU und 32GiB~RAM durchgeführt.   
-\subsection{Synthetische Experimente}
-
-Mittels synthetischen Experimenten können wir leicht die Robustheit gegenüber Ausreißern testen. 
-Wir haben Instanzen für das Optimierungsproblem Gl. \ref{eq:pcr-tls} erzeugt, indem wir zuerst Punkte für die korrekten Messungen aus einer Gleichverteilung gesampled haben wie in \cite{Yang20tro-teaser}. Diese korrekten Punkte werden danach skaliert um den Faktor $30$ um ein realistisches Verhältnis aus Ausdehnung (Größe) der Punktwolke und Messgenauigkeit zu erhalten. 30m ist dabei der kleinste zu erwartende Abstand, in dem noch Punkte von einem LiDAR-sensor detektiert werden. Üblich haben LiDAR-Sensoren eine Reichweite von über 100m. 
-Als nächstes wird das Messrauschen simuliert, indem aus einer Gleichverteilung im Intervall der Rauschgrenze $\epsilon$ gesampled wird und diese Werte zu jedem Punkt addiert werden. Zuletzt werden Ausreißer-Punkte simuliert, indem von einer Gleichverteilung innerhalb der bounding box der korrekten Punkte gesampled wird. 
-
-\subsection{Ergebnisse}
-
-\begin{figure}[!ht]
-	\centering
-	\begin{adjustbox}{width=1.\linewidth}
-		\includegraphics{figures/robust_wahba_runtime_rotation_error.pdf}
-		\end{adjustbox}
-		\caption{Der durchschnittliche Rotationsfehler in Abhängigkeit vom Anteil der Ausreißer: Unsere Methode bleibt robust bis zu 95\% Ausreißer, wie von der Truncated Least Squares Formulierung zu erwarten ist.}
-		\label{fig:rotation-error-over-outlier-rate}
-\end{figure}
-
-
-\begin{figure}[!ht]
-	\centering
-	\begin{adjustbox}{width=1.\linewidth}
-		\includegraphics{figures/robust_wahba_runtime_execution_time.pdf}
-	\end{adjustbox}
-	\caption{Die durchschnittliche Ausführungszeit von Branch-and-Bound in Abhängigkeit von der Gesamtzahl der Punkte $N$ des Optimierungsproblems.}
-	\label{fig:runtime}
-\end{figure}
-
-Wir haben eine Ausreißer-Rate von bis zu $95\%$ untersucht. Für jede evaluierte Rate und Datengröße wurden 100 Stichproben generiert. Die Ergebnisse des Rotationsfehlers in Abhängigkeit von der Ausreißer-Rate sind in Abb. \ref{fig:rotation-error-over-outlier-rate} dargestellt. Die Schätzung bleibt korrekt mit einem geringen Fehler von unter $1$ Grad. Wir haben auch die Skalierbarkeit unserer Methode über die Gesamtzahl der Punkte $N$ untersucht. Wie die Ergebnisse in Abb. \ref{fig:runtime} zeigen, kann unser Ansatz mit einer Laufzeit von unter 100 Millisekunden sogar für Echtzeitanwendungen eingesetzt werden.

@@ -248,7 +248,7 @@ If the inequality-constraint is not satisfied after the first unconstrained solv
 	\end{aligned}
 \end{equation}
 
-We can show that this optimization problem is equivalent to the following problem that finds the optimal axis of rotation $\mathbf{n}^*$:
+We show that this optimization problem is equivalent to the following problem that finds the optimal axis of rotation $\mathbf{n}^*$:
 
 \begin{equation}
 	\begin{aligned}
@@ -258,88 +258,10 @@ We can show that this optimization problem is equivalent to the following proble
 	\end{aligned}
 \end{equation}
 
-with the data matrices $\mathbf{A}$ and $\mathbf{g}$ that depend on the points $\mathbf{a}_i$ and $\mathbf{b}_i$ and the angle constraint $n_r$:
+with the data matrices $\mathbf{A}$ and $\mathbf{g}$ that depend on the points $\mathbf{a}_i$ and $\mathbf{b}_i$ and the angle constraint $n_r$. A definition is given in the Appendix \ref{thm:constrained-wahba-davenport}.
 
-\begin{equation}
-	\label{eq:davenport-data-matrices}
-	\begin{aligned}
-		\mathbf{B} &= \sum_{i=1}^N w_i \mathbf{R}_c^\transposed \mathbf{a}_i\mathbf{b}_i^\transposed \in \Rone^{3 \times 3}, \quad
-		\mathbf{z} = \sum_{i=1}^N w_i [\mathbf{a}_i]_{\times}\mathbf{b}_i \in \Rone^{3}, \quad \mathbf{C} = \mathbf{B} + \mathbf{B}^\transposed\\
-		\mathbf{A} &= \sin^2 \left(\frac{n_r}{2} \right) \mathbf{C}, \quad \mathbf{g} =  \sin \left(\frac{n_r}{2} \right) \cos \left(\frac{n_r}{2} \right) \mathbf{z}
-	\end{aligned}
-\end{equation}
-
-This derivation is based on the Daveport's Quaternion-method \cite{davenportsQ} \cite{8594296}, see \ref{proof:wls-relax-eq-constrained-rotation} for a proof of the equivalence of both optimization problems.
-
-To solve the optimization problem \ref{eq:eq-constrained-prob-ev}, we perform overall two steps: We first need to compute the eigenvalue decomposition  $\mathbf{A} = \mathbf{Q}\mathbf{\Lambda}\mathbf{Q}^\transposed$ and then need to find largest root of the following rational function $C(\gamma)$ (characteristic polynomial): 
-
-\begin{equation}
-	\label{eq:characterisitc-poly}
-	\begin{aligned}
-		C(\gamma) = \sum_{i=1}^3 \left(\frac{a_i}{\lambda_i - \gamma}\right)^2 - 1
-	\end{aligned}
-\end{equation}
-
-with
-\begin{equation}
-	\begin{aligned}
-		\mathbf{a} = (a_1, a_2, a_3)^\transposed = \mathbf{Q}^\transposed \mathbf{g} \in \Rthree, \quad \mathbf{\Lambda} = \text{diag}(\lambda_1, ..., \lambda_3)
-	\end{aligned}
-\end{equation}
-
-\begin{algorithm}[!ht]
-	\caption{Solve constrained eigenvalue problem}
-	\label{alg:solve-constrained-ev}
-	\begin{algorithmic}[1]
-		\Require{Data matrices $\mathbf{A} \in \Rone^{3\times3}, \mathbf{g} \in \Rthree$}
-		\Ensure Solution $\mathbf{n}^*$ to the optimization problem Eq. \ref{eq:eq-constrained-prob-ev}
-		\hypertarget{ref:min-constrained-ev}{
-			\Function{\code{solve\_constrained\_ev}}{$\mathbf{A}, \mathbf{g}$}}
-		\State $\code{kEps} \leftarrow 2^{-48}$ \algorithmiccomment{Epsilon-value for double precision}
-		\State $\mathbf{Q}, \mathbf{\Lambda} \leftarrow \code{eig(} \mathbf{A} \code{)}$ \algorithmiccomment{Compute eigen-decomposition}
-		\State $k = \argmax\{\lambda_1, \lambda_2, \lambda_3\}$
-		\State $\mathbf{a} \leftarrow \mathbf{Q}^\transposed \mathbf{g}$
-		\State $l = \lambda_k + |a_k| - \code{kEps}, r = ||\mathbf{a}|| + \lambda_k + \code{kEps}$ \algorithmiccomment{Bracket root}
-		\State $\hat{\gamma} \leftarrow \code{bisect} (C, [l, r] \code{)}$ \algorithmiccomment{Find root of Eq.\ref{eq:characterisitc-poly} with bisection}
-		\State $\mathbf{f} \leftarrow \left(\frac{a_1}{\lambda_1 - \hat{\gamma}}, \frac{a_2}{\lambda_2 - \hat{\gamma}}, \frac{a_3}{\lambda_3 - \hat{\gamma}} \right)$
-		\State $\mathbf{n}^* \leftarrow \mathbf{Q}\mathbf{f}$ 
-		\State \Return $\mathbf{n}^*$
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
-
-This algorithm is shown in Alg \ref{alg:solve-constrained-ev}, see \ref{sec:constrained-ev-problem-derivation} for a derivation with explanations.
-The eigen-decomposition can exploit the fact that the matrix is real and symmetric (but not positive semi-definite) for which faster algorithms are available (i.e. Eigen's \code{Eigen::SelfAdjointEigenSolver}). Note also that the vector $\mathbf{f}$ in line 8 is equal to $(\mathbf{\Lambda} - \hat{\gamma} \mathbf{I})^{-1} \mathbf{a}$. No actual matrix-inversion is required however since the matrix is diagonal and also with floating-point arithmetic it is numerically more stable/accurate to compute $a/b$ instead of $\frac{1}{b} a$. 
+To solve this non-convex optimization problem \ref{eq:eq-constrained-prob-ev} over the sphere, we use the algorithm proposed in \cite{10.1007/978-3-642-75536-1_57}. We perform overall two steps: We first need to compute the eigenvalue decomposition  $\mathbf{A} = \mathbf{Q}\mathbf{\Lambda}\mathbf{Q}^\transposed$ and then need to find the rightmost root of a certain rational function (characteristic polynomial). This can be done in practice very fast, yielding a constant time algorithm.
 
 
-\subsection{Overall active-set solver}
-
-\begin{algorithm}[!ht]
-	\caption{Active-set method for minimizing the WLS-relaxation over rotations (\ref{eq:tls-rwls})}
-	\label{alg:min-wls-relax-rot}
-	\begin{algorithmic}[1]
-		\Require{Point cloud matrices $\mathbf{A}, \mathbf{B}$, node interval $(\mathbf{R_c}, n_r)$, computed WLS-relaxation weights vector $\mathbf{w}$}
-		\Ensure Solution to the optimization problem \ref{eq:tls-rwls}
-		\hypertarget{ref:min-wls-relax-rot2}{
-			\Function{\code{Minimize\_WLS\_Relax\_Rotation}}{$\mathbf{A}, \mathbf{B}, \mathbf{R_c}, n_r, \mathbf{w}$}}
-		\State $\mathbf{B} \leftarrow \sum_{i=1}^N w_i \mathbf{R}_c^\transposed \mathbf{a}_i\mathbf{b}_i^\transposed $ \algorithmiccomment{Compute cross-correlation matrix}
-		\State $\bar{\Delta \mathbf{R}} \leftarrow \code{svd\_rot(} \mathbf{B} \code{)}$  \algorithmiccomment{Solve unconstrained with SVD-algorithm}
-		\If{$d_{\angle}(\mathbf{I}, \Delta\mathbf{R}) \leq n_r$} \algorithmiccomment{Check if constraint is already satisfied}
-		\State \Return $\mathbf{R_c} \bar{\Delta \mathbf{R}}$
-		\EndIf
-		\State $\mathbf{A}, \mathbf{g} \leftarrow \code{get\_davenport\_matrices(} \mathbf{B}, n_r \code{)}$ \algorithmiccomment{Get  data-matrices (Eq. \ref{eq:davenport-data-matrices})}
-		\State $\mathbf{n}^* \leftarrow \code{solve\_constrained\_ev(} \mathbf{A}, \mathbf{g} \code{)}$ \algorithmiccomment{Solve for
-			rotation axis (Eq. \ref{eq:eq-constrained-prob-ev})}
-		\State $\bar{\Delta \mathbf{R}} \leftarrow \code{from\_axis\_angle(}\mathbf{n}^*, n_r \code{)}$ \algorithmiccomment{ Construct optimal rotation}
-		\State \Return $\mathbf{R_c} \bar{\Delta \mathbf{R}}$
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
-
-
-Our active-set solver for finding the global minimum of the WLS-relaxation over rotations is shown in Alg. \ref{alg:min-wls-relax-rot}. It is very efficient since the only computationally intensive operation is the computation of the $3 \times 3$ cross-correlation matrix $\mathbf{B}$ (line 13) that has linear runtime in the number of points. All the operations that follow are based on this $3 \times 3$ matrix and therefore have a constant runtime (i.e. independent of the number of points) and are in practice very fast. For example, the eigen-decomposition (line 3) takes only around $10 \mu s$ while the computation of the cross-correlation matrix requires aroundd $500 \mu s$ for 10k points. This is also because the cross-correlation matrix is re-used between the SVD-algorithm (line 3) and the algorithm for the equality-constraint case (line 7). The function \code{from\_axis\_angle} converts a given axis and angle to a rotation matrix using Rodrigues' formula.
-
+Our active-set solver for finding the global minimum of the WLS-relaxation over rotations is is overall very efficient. The only computationally intensive operation is the computation of the $3 \times 3$ cross-correlation matrix $\mathbf{B}$ (line 13) that has linear runtime in the number of points. All the operations that follow are based on this $3 \times 3$ matrix and therefore have a constant runtime (i.e. independent of the number of points). (For example, the eigen-decomposition (line 3) takes only around $10 \mu s$ while the computation of the cross-correlation matrix requires aroundd $500 \mu s$ for 10k points.)
 This solver is novel to our knowledge -- the problem of solving the Wahba-problem with inequality-constrained angle has not been proposed in the literature before.
-
-The solver for the equality-constraint case ($\code{solve\_constrained\_ev}$) is implemented from the derivation first done in \cite{10.1007/978-3-642-75536-1_57} and inspired by the \textit{Trust-Region Subproblem} (TRS) that arises in trust-region (local) optimization algorithms \cite{Adachi2017SolvingTT} such as Levenberg-Marquardt. For such TRS-problems, an active-set method has been proposed also in \cite{Rontsis2022} where it was generalized additionally for a minimum-norm constraints.
-
