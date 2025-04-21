@@ -2,26 +2,6 @@
 \setcounter{page}{1}
 \maketitlesupplementary
 
-\begin{theorem}[\textbf{Knowing the ground-truth inliers solves the TLS-problem}]
-	Given the ground-truth inlier set $\mathcal{I}^*$, the global optimum $(\MR^*, \vt^*)$ is found by solving the least-squares problem:
-	\begin{equation}
-		\begin{aligned}
-			(\MR^*, \vt^*) = \argmin_{(\MR, \vt) \in \SEthree} \sum_{i \in \mathcal{I}^*} \normsq{\MR \vp_i - \vq_i + \vt}
-		\end{aligned}
-	\end{equation}
-\end{theorem}
-
-\begin{proof}
-    \label{proof:gt-corrs-solves-tls}
-	Since we know the ground-truth inlier set, we know which residuals are less or equal $\epssq$ and therefore not truncated. Since $\min(x, \epssq) = x$ for all $x \leq \epssq$, we can equivalently rewrite the TLS-objective \ref{eq:pcr-tls} as:
-    \begin{equation}
-	\begin{aligned}
-		&\sum_{i=1}^{N} \min \left(\normsq{\MR \vp_i - \vq_i + \vt}, \epsilon^2 \right)\\
-        &= \sum_{i \in \mathcal{I}^*} \normsq{\MR \vp_i - \vq_i  + \vt}  + \sum_{i \in \{1, \cdots, N\}  \setminus \mathcal{I}^*} \epsilon^2
-	\end{aligned}
-    \end{equation}
-    Since the second sum is constant, it does not affect the minimizer of the least-squares term (the first sum). Therefore, minimizing only  the first, i.e. solving the least-squares problem solves the TLS-problem.
-\end{proof}
 
 
 \begin{lemma}[\textbf{Minimum of rotation residual}]\label{lemma:ls-rot}
@@ -50,122 +30,274 @@
 	
 \end{proof}
 
-\begin{lemma}[\textbf{Least-squares solution with two points}]\label{lemma:ls-two-points}
-	In the special case of two points, the least squares solution for point cloud registration is
-	\begin{equation}
-		\begin{aligned}
-			\min_{(\MR, \vt) \in \SEthree} & \normsq{\MR \vp_i - \vq_i  + \vt} +  \normsq{\MR \vp_j - \vq_j  + \vt}\\
-			&= \frac{1}{2} \left( \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} \right)^2
-		\end{aligned}
-	\end{equation}
-	Both residual terms are equal at the minimum.
-\end{lemma}
+
+
+\section{Interval analysis of residuals under translation}
+\label{proof:tls-relax-minmax-r}
+
+\begin{theorem}
+	The residual term $r_i = ||\mathbf{a}_i - \mathbf{b}_i + \mathbf{t}||_2^2$
+	has the minimum $r_{min}^i = \max(0, ||\mathbf{d}||_2 - n_r)^2$ and the maximum $r_{max}^i = (||\mathbf{d}||_2 + n_r)^2$
+	for any translation $\mathbf{t} \in \Rthree, ||\mathbf{c} - \mathbf{t}|| \leq n_r$ where $\mathbf{d} = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}$.
+\end{theorem}
 
 \begin{proof}
-	A well known result is that the optimal translation is related to the optimal rotation and the centroids of both point clouds (see e.g \cite{Kabsch-1976-Point-set-alignment, sorkine2017least}):
+	With $\mathbf{t}= \mathbf{c} - \Delta \mathbf{t} \iff \Delta \mathbf{t} = \mathbf{c} - \mathbf{t}$:
 	\begin{equation}
 		\begin{aligned}
-			\vt &= \bar{\vq} - \MR \bar{\vp}\\
-			\bar{\vp} &= \frac{\vp_i + \vp_j}{2}, \, \bar{\vq} = \frac{\vq_i + \vq_j}{2}
+			r_i &= ||\mathbf{a}_i - \mathbf{b}_i + \mathbf{t}||_2^2
+			= ||\mathbf{a}_i - \mathbf{b}_i + \mathbf{c} - \Delta\mathbf{t}||_2^2
+			= ||\mathbf{d} - \Delta\mathbf{t}||_2^2\\ 
+			&= (\mathbf{d} - \Delta\mathbf{t})^\transposed(\mathbf{d} - \Delta\mathbf{t})=
+			\mathbf{d}^\transposed\mathbf{d} - 2 \mathbf{d}^\transposed \Delta\mathbf{t} + \Delta\mathbf{t}^\transposed \Delta\mathbf{t}\\
+			&= ||\mathbf{d}||_2^2 - 2 \, ||\mathbf{d}|| \, ||\Delta\mathbf{t}||  \cos \theta + ||\Delta\mathbf{t}||_2^2\\
 		\end{aligned}
 	\end{equation}
-	We insert the optimal translation into the objective and simplify:
-	\begin{equation}\label{eq:insert-t-opt}
-		\begin{aligned}
-			&\normsq{\MR \vp_i - \vq_i  + (\bar{\vq} - \MR \bar{\vp})} +  \normsq{\MR \vp_j - \vq_j  + (\bar{\vq} - \MR \bar{\vp})}\\
-			=&\normsq{\MR (\vp_i - \bar{\vp}) - (\vq_i -\bar{\vq})} + \normsq{\MR (\vp_j - \bar{\vp}) - (\vq_j -\bar{\vq})} \\
-			=&\normsq{\MR \left(\vp_i - \frac{\vp_i + \vp_j}{2} \right) - \left(\vq_i - \frac{\vq_i + \vq_j}{2} \right)}\\
-			+ &\normsq{\MR \left(\vp_j - \frac{\vp_i + \vp_j}{2} \right) - \left(\vq_j -\frac{\vq_i + \vq_j}{2} \right)} \\
-			=&\normsq{ \frac{1}{2}(\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j))}\\
-			+ &\normsq{ \frac{1}{2}(\MR (\vp_j - \vp_i ) - (\vq_j - \vq_i))}\\
-			=& 2\normsq{ \frac{1}{2}(\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j))}\\
-			=& \frac{1}{2}\normsq{\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j)}\\
-		\end{aligned}
-	\end{equation}
-	We just showed that both residual terms are equal at the optimal translation.	
-	What remains is to optimize over the rotation $\MR$. By lemma \ref{lemma:ls-rot}, the minimum over rotations is:
+	
 	\begin{equation}
 		\begin{aligned}
-			&\min_{(\MR, \vt) \in \SEthree} \normsq{\MR \vp_i - \vq_i  + \vt} +  \normsq{\MR \vp_j - \vq_j  + \vt}\\
-			&=\min_{\MR \in \SOthree} \frac{1}{2}\normsq{\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j)}\\
-			&= \frac{1}{2} \left( \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} \right)^2
+			r_{min}^i = \min_{\Delta \mathbf{t}} r_i &= 
+			||\mathbf{d}||_2^2 + 
+			\min_{\theta \in [-\pi, \pi], ||\Delta\mathbf{t}|| \in [0, n_r]} \left( -2 \, ||\mathbf{d}||  \, ||\Delta\mathbf{t}|| \cos \theta + ||\Delta\mathbf{t}||_2^2 \right) \\
+			&= ||\mathbf{d}||_2^2 + \min_{||\Delta\mathbf{t}|| \in [0, n_r]} \left( -2 \, ||\mathbf{d}||  \, ||\Delta\mathbf{t}|| + ||\Delta\mathbf{t}||_2^2 \right) \\
+			&= \min_{||\Delta\mathbf{t}|| \in [0, n_r]}  (||\mathbf{d}||_2 - ||\Delta\mathbf{t}||_2)^2\\
+			&=\max(0, ||\mathbf{d}||_2 - n_r)^2\\
+			r_{min}^i = \max_{\Delta \mathbf{t}} r_i &= 
+			||\mathbf{d}||_2^2 + 
+			\max_{\theta \in [-\pi, \pi], ||\Delta\mathbf{t}|| \in [0, n_r]} \left( -2 \, ||\mathbf{d}||  \, ||\Delta\mathbf{t}|| \cos \theta + ||\Delta\mathbf{t}||_2^2 \right) \\
+			&= ||\mathbf{d}||_2^2 + 2 \, ||\mathbf{d}||\, n_r + n_r^2 = (||\mathbf{d}||_2 + n_r)^2
 		\end{aligned}
 	\end{equation}
+	
 \end{proof}
 
-\begin{theorem}[\textbf{Non-empty intersection of T-Sets is equivalent to compatible TIMs}]
+\section{Interval analysis of residuals under rotation}
+\label{proof:wls-interval-analysis-rotation}
+
+\begin{theorem}
+	
+	The residual term $r_i = ||\mathbf{a}_i - \mathbf{R}\mathbf{b}_i ||_2^2$
+	has the minimum $r_{min}^i$ and the maximum $r_{max}^i$
+	over all 3D-rotations $\mathbf{R} \in \SOthree$ that satisfy $d_{\angle}(\mathbf{R}, \mathbf{R_c}) \leq n_r$ where $\mathbf{R_c} \in \SOthree$ is the ball center:
 	\begin{equation}
 		\begin{aligned}
-			&\mathcal{T}_i \cap \mathcal{T}_j \neq \emptyset\\
-			\iff &\exists (\MR, \vt) \in \SEthree:\\
-			&\norm{\MR \vp_i - \vq_i + \vt} \leq \epsilon\\
-			\land &\norm{\MR \vp_j - \vq_j + \vt} \leq \epsilon\\
-			\iff &| \norm{\va_{ij}} - \norm{\vb_{ij}} | \leq 2 \epsilon
+			r_{min}^i &= ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\max(\theta - n_r, 0))\\
+			r_{max}^i &= ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\min(\theta + n_r, \pi))
 		\end{aligned}
 	\end{equation}
-	where 
+	with 
 	\begin{equation}
-		\label{eq:tims}
 		\begin{aligned}
-			\va_{ij} &= \vp_i - \vp_j\\
-			\vb_{ij} &= \vq_i - \vq_j
+			\theta &= \arccos \left( \frac{(\mathbf{R}_c^\transposed \, \mathbf{a}_i )^\transposed \mathbf{b}_i}
+			{||\mathbf{a}_i|| \, || \mathbf{b}_i||} \right)
+		\end{aligned}
+	\end{equation}
+	being the angle between $\mathbf{R}_c^\transposed \, \mathbf{a}_i $ and $\mathbf{b}_i$.
+	
+\end{theorem} 
+
+\begin{proof}
+	With $\mathbf{R}  = \mathbf{R}_c \Delta\mathbf{R} \iff \mathbf{R}_c^\transposed\mathbf{R} = \Delta \mathbf{R}$:
+	\begin{equation}
+		\begin{aligned}
+			r_i &= ||\mathbf{a}_i - \mathbf{R}\mathbf{b}_i ||_2^2 \\
+			&= || \mathbf{R}_c^\transposed \left(\mathbf{a}_i - \mathbf{R}\mathbf{b}_i\right) ||_2^2\\
+			&= || \mathbf{R}_c^\transposed \mathbf{a}_i - \mathbf{R}_c^\transposed \mathbf{R}\mathbf{b}_i ||_2^2\\
+			&= \left(\mathbf{R}_c^\transposed \mathbf{a}_i - \Delta \mathbf{R}\mathbf{b}_i \right)^\transposed
+			\left(\mathbf{R}_c^\transposed \mathbf{a}_i - \Delta \mathbf{R}\mathbf{b}_i \right)\\ 
+			&= \left(\mathbf{R}_c^\transposed \mathbf{a}_i \right)^\transposed \left(\mathbf{R}_c^\transposed \mathbf{a}_i \right) - 2 (\mathbf{R}_c^\transposed\mathbf{a}_i )^\transposed \Delta\mathbf{R}\mathbf{b}_i + (\Delta \mathbf{R}\mathbf{b}_i )^\transposed (\Delta \mathbf{R}\mathbf{b}_i )\\
+			&= \mathbf{a}_i^\transposed \mathbf{R}_c \mathbf{R}_c^\transposed \mathbf{a}_i - 2 (\mathbf{R}_c^\transposed\mathbf{a}_i )^\transposed \Delta\mathbf{R}\mathbf{b}_i + \mathbf{b}_i^\transposed  \Delta \mathbf{R}^\transposed  \Delta \mathbf{R}\mathbf{b}_i\\
+			&= \mathbf{a}_i^\transposed \mathbf{a}_i - 2 (\mathbf{R}_c^\transposed\mathbf{a}_i )^\transposed \Delta\mathbf{R}\mathbf{b}_i + \mathbf{b}_i^\transposed \mathbf{b}_i\\
+			&= ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 (\mathbf{R}_c^\transposed\mathbf{a}_i )^\transposed \Delta\mathbf{R}\mathbf{b}_i
+		\end{aligned}
+	\end{equation}
+	Since $\Delta \mathbf{R}$ is defined as rotating a point by at most $n_r$ (definition of geodesic distance $d_{\angle}(\mathbf{R}, \mathbf{R_c}) \leq n_r \iff d_{\angle}(\mathbf{I}, \Delta \mathbf{R} \leq n_r$) from this follows:
+	\begin{equation}
+		\begin{aligned}
+			r_{min}^i &= \min_{\Delta \mathbf{R} \in \SOthree, \, d_{\angle}(\mathbf{I}, \Delta \mathbf{R}) \leq n_r} \left( ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 (\mathbf{R}_c^\transposed\mathbf{a}_i )^\transposed \Delta\mathbf{R}\mathbf{b}_i \right)\\ 
+			&= ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\max(\theta - n_r, 0)) \\
+			r_{max}^i &=
+			\max_{\Delta \mathbf{R} \in \SOthree, \, d_{\angle}(\mathbf{I}, \Delta \mathbf{R}) \leq n_r} \left( ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 (\mathbf{R}_c^\transposed\mathbf{a}_i )^\transposed \Delta\mathbf{R}\mathbf{b}_i \right)\\ 
+			&=  ||\mathbf{a}_i||^2 + ||\mathbf{b}_i||^2 - 2 ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\min(\theta + n_r, \pi))
+		\end{aligned}
+	\end{equation}
+	
+\end{proof}
+
+\begin{theorem}
+	
+	For the truncated least-squares function:
+	
+	\begin{equation}
+		\label{eq:tls-t-opt-branch2}
+		\begin{aligned}
+			\text{TLS}(\mathbf{x}) = \sum_{i=1}^{N} \min \left(r(\mathbf{x}, \mathbf{x}_i)^2, \epsilon^2 \right)\\
+		\end{aligned}
+	\end{equation}
+	
+	where $\mathbf{x}_i$ are data points and $r_i = r(\cdot)^2$ are residual terms convex in $\mathbf{x}$. Given are the minimum and maximum value of each residual term $r_i$ over every $\mathbf{x} \in \mathcal{X}$, denoted as $r_{min}^i$ and $r_{max}^i$ respectively. Then, $\text{WLS}_{r}$ is a convex relaxation of \ref{eq:tls-t-opt-branch2} over $\mathcal{X}$:
+	\begin{equation}
+		\label{eq:tls-wls-relaxation}
+		\begin{aligned}	
+			\text{WLS}_{r}(\mathbf{x}) &= 
+			\sum_{i=1}^{N} (1 - o_i) \left(w_i r_i  + (1 - w_i) r_{min}^i \right) + \sum_{i=1}^{N} o_i\epsilon^2\\
+		\end{aligned}
+	\end{equation}
+	
+	with the weights $w_i$ defined as:
+	\begin{equation}
+		\begin{aligned}	
+			w_i  = 
+			\begin{cases}
+				\frac{\epsilon^2 - r_{min}^i}{r_{max}^i - r_{min}^i} &  r_{max}^i > \epsilon^2\\
+				1 & \, \text{otherwise}
+			\end{cases}
+		\end{aligned}
+	\end{equation}
+	
+	and the binary variables $o_i$ deciding whether the $i$-th residual is an outlier or not:
+	\begin{equation}
+		\begin{aligned}	
+			o_i &= \begin{cases}
+				1 &  r_{min}^i > \epsilon^2\\
+				0 & \, \text{otherwise}
+			\end{cases}
+		\end{aligned}
+	\end{equation}
+	
+\end{theorem}	
+
+\begin{proof}
+	
+	In the truncated-least-squares function, non-convexity is introduced solely by the truncation since the squared terms are convex.
+	Therefore, we only need to show that the re-weighted sum leads to the residuals not being truncated. 
+	For this, we apply an affine transform on each residual so that $w_i r_i + y_0 = r_{min}^i$ for $r_i = r_{min}^i$ and $w_i r_i + y_0 = \epsilon^2$ for $r_i = r_{max}^i$:
+	Subtracting the first from the second equation yields:
+	\begin{equation}
+		\begin{aligned}	
+			&w_i (r_{max}^i - r_{min}^i) = \epsilon^2 - r_{min}^i\\
+			\iff &w_i  = \frac{\epsilon^2 - r_{min}^i}{r_{max}^i - r_{min}^i}
+		\end{aligned}
+	\end{equation}
+	and solving for $y_0$ yields:
+	\begin{equation}
+		\begin{aligned}	
+			w_i r_{min}^i + y_0 &= r_{min}^i\\
+			\iff y_0 &= r_{min}^i - w_i r_{min}^i\\
+			\iff y_0 &= (1- w_i) r_{min}^i
+		\end{aligned}
+	\end{equation}
+	
+	Therefore, $w_k r_k + (1 - w_k) r_{min}^k \leq \epsilon^2$ holds for all $k$ for which $o_k = 0$ and therefore these terms are not truncated and thus convex. The sum
+	
+	\begin{equation}
+		\begin{aligned}	
+			\sum_{i=1}^{N} (1 - o_i) \left(w_i r_i  + (1 - w_i) r_{min}^i \right)
+		\end{aligned}
+	\end{equation}
+	
+	is therefore convex since sums of convex functions are convex \cite[Ch. 2.3.2, p.36]{Boyd_Vandenberghe_2004}.
+	
+	Since $\sum_{i=1}^{N} o_i\epsilon^2$ is constant, the overall term \ref{eq:tls-wls-relaxation} also remains convex. Since $r_k \in [r^k_{min}, r^k_{max}]$ and $w_k \leq 1$, $w_k r_k  + (1 - w_k) r_{min}^k \leq r_k$ for all $k$ for which $o_k = 0$  Eq. \ref{eq:tls-wls-relaxation} is below the objective \ref{eq:tls-t-opt-branch2}. Therefore, \ref{eq:tls-wls-relaxation} is a convex relaxation of \ref{eq:tls-t-opt-branch2} over $\mathcal{X}$.
+	
+\end{proof}	
+
+\section{Least-squares rotation estimation with equality-constrained angle}
+\label{proof:wls-relax-eq-constrained-rotation}
+
+\begin{theorem}
+	
+	The least-squares rotation estimation problem 
+	\begin{equation}
+		\label{eq:tls-rwls-a}
+		\begin{aligned}
+			\argmin_{\mathbf{R} \in \SOthree}  \quad &\sum_{i=1}^{N} w_i ||\mathbf{R}_c^\transposed \mathbf{a}_i - \Delta\mathbf{R} \mathbf{b}_i ||_2^2 \\
+			\text{subject to} \quad &d_{\angle}(\mathbf{I}, \Delta\mathbf{R}) = n_r
+		\end{aligned}
+	\end{equation}
+	where the angle of rotation is constrained to $n_r$ is equivalent to the following optimization problem over the rotation axis $\mathbf{n}$:
+	\begin{equation}
+		\label{eq:rot-est-constrained-qcqp}
+		\begin{aligned}
+			\argmin_{\mathbf{n} \in \Rthree} \quad &-\left(\mathbf{n}^\transposed \mathbf{A} \mathbf{n} + 2 \mathbf{g}^\transposed \mathbf{n} \right)\\
+			\text{subject to} \quad &|| \mathbf{n}|| = 1\\
+		\end{aligned}
+	\end{equation}
+	with
+	\begin{equation}
+		\label{eq:ev-constr-data-mat-a}
+		\begin{aligned}
+			\mathbf{B} &= \sum_{i=1}^N w_i \mathbf{a}_i\mathbf{b}_i^\transposed \in \Rone^{3 \times 3}, \quad
+			\mathbf{z} = \sum_{i=1}^N w_i [\mathbf{a}_i]_{\times}\mathbf{b}_i \in \Rone^{3}, \quad \mathbf{C} = \mathbf{B} + \mathbf{B}^\transposed\\
+			\mathbf{A} &= \sin^2 \left(\frac{n_r}{2} \right) \mathbf{C}, \quad \mathbf{g} =  \sin \left(\frac{n_r}{2} \right) \cos \left(\frac{n_r}{2} \right) \mathbf{z}
 		\end{aligned}
 	\end{equation}
 \end{theorem}
 
 \begin{proof}
-	\label{proof:non-empty-intersection-implies-tims-compat}
-	Whether there exists a $(\MR, \vt) \in \SEthree$ such that $\norm{\MR \vp_i - \vq_i  + \vt} \leq \epsilon$ is equivalent to whether the minimum is $\leq \epsilon$, i.e. whether $\min_{(\MR, \vt) \in \SEthree} \norm{\MR \vp_i - \vq_i  + \vt} \leq \epsilon$ holds.
-	By lemma \ref{lemma:ls-two-points} by minimizing the sum of two residuals, at the minimum they are both equal and therefore if their sum is $\leq 2\epssq$, they both are $\leq \epssq$. We conclude therefore
+	
+	We first separate the optimization over the rotation axis and angle. For this, we use the quaternion representation of \ref{eq:tls-rwls-a}. One can show that the problem \ref{eq:tls-rwls-a} is equivalent to:
+	
 	\begin{equation}
+		\label{eq:davenports-q-problem}
 		\begin{aligned}
-			&\mathcal{T}_i \cap \mathcal{T}_j \neq \emptyset \iff\\
-			&\min_{(\MR, \vt) \in \SEthree} \normsq{\MR \vp_i - \vq_i  + \vt} + \normsq{\MR \vp_j - \vq_j  + \vt} \leq 2\epssq\\
-			& \iff \frac{1}{2} \left( \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} \right)^2 \leq 2\epssq\\
-			& \iff | \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} | \leq 2\epsilon\\
-			& \iff | \norm{\va_{ij}} - \norm{\vb_{ij}} | \leq 2 \epsilon
+			\max_{\mathbf{q} \in \Rone^4} &\quad \mathbf{q}^\transposed \mathbf{K} \mathbf{q}\\
+			\text{subject to} &\quad  ||\mathbf{q}|| = 1
 		\end{aligned}
 	\end{equation}
-\end{proof}
+	
+	where $\mathbf{q}$ is a 4-dimensional vector representing the quaternion of rotation and $\mathbf{K} \in \Rone^{4\times4}$ is a data matrix. This optimization problem is known as the \textit{Davenport's q-method}. The quaternion can be written in axis-angle form as:
+	
+	\begin{equation}
+		\label{eq:q-axis-angle}
+		\begin{aligned}
+			\mathbf{q} = \left( \sin \left( \frac{\theta}{2} \right) \mathbf{n}, \cos \left(\frac{\theta}{2} \right) \right)^\transposed
+		\end{aligned}
+	\end{equation}
+	i.e. the first three elements are the unit-vector $\mathbf{n} \in \Rthree, ||\mathbf{n}|| = 1$ of the axis of rotation multiplied by $\sin \left( \frac{\theta}{2} \right)$, while the fourth element is just $\cos \left(\frac{\theta}{2} \right)$ and $\theta$ is the angle of rotation.
+	The data matrix $\mathbf{K}$ has the following block-structure:
+	
+	\begin{equation}
+		\label{eq:k-mat}
+		\begin{aligned}
+			\mathbf{K} = \left(
+			\begin{array}{c|c}
+				\begin{array}{ccc}
+					& & \\
+					& \mathbf{C} & \\
+					& & 
+				\end{array}
+				&
+				\begin{array}{c}
+					\mathbf{z} \\
+				\end{array}
+				\\
+				\hline
+				\begin{array}{ccc}
+					& \mathbf{z}^\transposed &
+				\end{array}
+				&
+				\trace(\mathbf{C})
+			\end{array}
+			\right) \in \Rone^{4 \times 4}
+		\end{aligned}
+	\end{equation}
+	
 
-\begin{lemma}[\textbf{Consensus sets are cliques in the intersection graph}]
-	Consensus sets are cliques in the intersection graph.
-\end{lemma}
-
-\begin{proof}
-	Cliques in the intersection imply by definition pairwise non-empty intersection of T-Sets. Since pairwise non-empty intersection is a necessary condition for total non-empty intersection and therefore consensus sets, consensus sets are cliques in the intersection graph.
-\end{proof}
-
-\begin{lemma}[\textbf{Maximal clique enumeration and global optimality}]
-	\label{lemma:max-clique-non-helly-app}
-	Maximal clique enumeration finds the ground-truth consensus set and therefore the global minimum of an instance if all maximal cliques of this instance are maximal consensus sets.
-\end{lemma}
-
-\begin{proof}
-	The key statement of the lemma is that if every maximal clique is a maximal consensus set, then subcliques of maximal cliques (which by definition are not maximal cliques) cannot be the ground truth inlier set. Consequently, they need not be enumerated. 
-
-	The global optimum lies in the union of all T-sets, i.e. $\bigcup_{i \in \RangeOneToN} \mathcal{T}_i$. Every vertex of a graph is contained in at least one maximal clique of that graph. Therefore, the global optimum is contained in at least one union $\bigcup_{i \in \vc} \mathcal{T}_i$ of a maximal clique $\vc$.
-
-	The intersection of the T-sets of any subclique contains the intersection of the T-sets of a maximal clique containing that subclique. Therefore, if the consensus set is maximal, the best solution (minimizing the TLS objective) that can be found among subcliques is no better than this maximal clique. If this holds for every maximal clique of an instance, then the ground-truth inlier set is not a subclique of any maximal clique, and therefore must itself be a maximal clique. Thus, enumerating maximal cliques will find the ground-truth consensus set if all maximal cliques of this instance are maximal consensus sets. v
-\end{proof}
-
-\label{proof:wls-interval-analysis-rotation}
-
-
-\begin{lemma}[\textbf{Consensus set size and TLS objective }]
-	Given an upper-bound $\text{UB}$ on the TLS objective, the ground-truth consensus set must have at least $d_{m}$:
-    \begin{equation}
-        \begin{aligned}
-            d_m = \lceil N - \text{UB} / \epssq \rceil
-        \end{aligned}
-    \end{equation}
-\end{lemma}
-
-\begin{proof}
-    By the definition of the TLS objective, 
-    $r_{in} + (N - d_m) \epsilon^2 \leq \text{UB}$ must hold, where $r_{in}$ is the (unknown) sum of the inlier residuals. Rearranging yields $d_m \geq r_{in}  + N - \text{UB} / \epssq$.
-    Since all the summands in the TLS objective are non-negative, $r_{in} = 0$ is a valid lower bound. Since the number of elements in the consensus set $d_m$ must be an integer, we conclude that $d_m = \lceil N - \text{UB} / \epssq \rceil$.
-\end{proof}
-
-
-
+	
+	We can rewrite the objective function $\mathbf{q}^\transposed \mathbf{K} \mathbf{q}$  of \ref{eq:davenports-q-problem} using the blocks of the block-matrix $\mathbf{K}$: 
+	
+	\begin{equation}
+		\label{eq:dv-q-rew}
+		\begin{aligned}
+			&\mathbf{q}^\transposed \mathbf{K} \mathbf{q}\\
+			&= \sin^2 \left(\frac{\theta}{2} \right) \mathbf{n}^\transposed \mathbf{C} \mathbf{n} + 2 \sin \left(\frac{\theta}{2} \right) \cos \left(\frac{\theta}{2} \right) \mathbf{z}^\transposed \mathbf{n} + \cos^2 \left(\frac{\theta}{2} \right) \trace(\mathbf{C})
+		\end{aligned}
+	\end{equation}
+	
+	We now have a scalar term where the axis $\mathbf{n}$ and the angle $\theta$ occur separately and with this we can formulate the optimization problem over the axis. By setting $\theta = n_r$ and solving only over $\mathbf{n}$ we can therefore solve the equality-constrained problem \ref{eq:tls-rwls-a}.
+	
+	Since the term $ \cos^2 \left(\frac{\theta}{2} \right) \trace(\mathbf{C})$ is constant in Eq. \ref{eq:dv-q-rew}, it does no affect the minimizer and we will leave it out. 
+	By defining the data-matrices as in \ref{eq:ev-constr-data-mat-a}, we immediatelly see that the problem 
+	\ref{eq:rot-est-constrained-qcqp} is equivalent to Davenports Q-problem \ref{eq:davenports-q-problem} and therefore equivalent to \ref{eq:tls-rwls-a}, concluding the proof.
+\end{proof}	
