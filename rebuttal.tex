@@ -1,0 +1,78 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[rebuttal]{cvpr}
+
+% Include other packages here, before hyperref.
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+
+% Import additional packages in the preamble file, before hyperref
+\input{preamble}
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+
+% If you wish to avoid re-using figure, table, and equation numbers from
+% the main paper, please uncomment the following and change the numbers
+% appropriately.
+%\setcounter{figure}{2}
+%\setcounter{table}{1}
+%\setcounter{equation}{2}
+
+% If you wish to avoid re-using reference numbers from the main paper,
+% please uncomment the following and change the counter value to the
+% number of references you have in the main paper (here, 100).
+%\makeatletter
+%\apptocmd{\thebibliography}{\global\c@NAT@ctr 100\relax}{}{}
+%\makeatother
+
+%%%%%%%%% PAPER ID  - PLEASE UPDATE
+\def\paperID{16006} % *** Enter the Paper ID here
+\def\confName{CVPR}
+\def\confYear{2025}
+
+\input{sec/custom_commands}
+\begin{document}
+
+%%%%%%%%% TITLE - PLEASE UPDATE
+\title{Towards certifiable outlier-robust point cloud registration in real-time using intersection graphs}  % **** Enter the paper title here
+
+\maketitle
+\thispagestyle{empty}
+\appendix
+
+We first want to thank the reviewers for their comments, feedback and valuable ideas.
+We are happy to hear that reviewer 1 enjoyed reading our paper, and that reviewer 1 and 3 think the ideas in our paper may inspire the research community.
+
+\textbf{Response to reviewer 1}. To address the overall confusion about the problem setting reviewer 1 seemingly had, we realize that we will need to elaborate more on our specific use case which is global localization for autonomous driving, using LiDAR-sensors. For this use-case, only rigid transformation is needed (we will change the title to mention rigid), and in combination with local feature descriptors, a few hundred points are usually enough. We agree here fully with reviewer 1 that different use-cases have different requirements on scalability and speed. We think that considering there is a high-frequency odometry, doing LiDAR-registration with 10Hz (100ms) is the bare-minimum that could still count as real-time in our use-case.
+The assumption of pre-made correspondences indeed means that we cannot just plug in raw point clouds and is therefore a limitation. Instead, we need to use keypoints and match them with feature descriptors, this was done in the evaluation section.
+We fully agree with reviewer 1 that knowing what influence epsilon has on the estimation error \cite{antonante2024-robust-perception} would be valuable, we will add an evaluation for this.
+
+\textbf{Response to reviewer 2}.
+Addressing the main concern of novelty of reviewer 2, we want to point out that while on the surface, our approach looks similar to \cite{zhang20233d} because it uses maximal cliques, our approach is mathematically rigorous by stating it as an optimization problem with an exactly defined objective function, namely the Truncated Least Squares (TLS). It offers in our opinion a great insight why listing maximal cliques works well in practice, instead of only empirically observing this fact. Neither was it previously described what compatibility criterion really means (namely pairwise intersection of the so-called T-sets),
+nor what the connection is between the global minimas of the Truncated Least Squares (TLS) objective and the maximal cliques of the newly introduced intersection graph. Also, when talking about global optimality, we have shown that maximum cliques are not a sufficient condition for global optimality due to collections of SE3- T-sets lacking the Helly-property, a key insight about the combinatorics of the problem that was previously overlooked.
+\textbf{Question 2}: The answer is unfortunately no, as we wrote at the end of section 5.1.2.\\
+%\textit{Unfortunately, being only able to reject some and not all instances means our solver is currently neither globally optimal (being able to find the global minimum of every instance and outputting a valid lower bound on every instance), nor certifiable (outputting only a valid lower bound on every instance)}.\\
+\textbf{Question 3}: GNC definitively undermines global optimality because it is a heuristic, yes. But we really mean GNC often \textit{finds} the global optimum, not that it \textit{proves} that the found solution is the global optimum.\\
+\textbf{Question 4}: We indeed have a bad performance but only with the FPFH descriptor on 3DMatch, we will investigate the root cause of this. Since we have a good performance on 3DMatch using FCGF descriptor (83.92\%) and on KITTI even an accuracy comparable to state-of-the art with both FPFH and FCGF (95.5\% and 96.76\% respectively, top-three overall), this shows our algorithm is able to compete with state-of-the-art with both descriptors at least on KITTI. We suspect a wrong parameter in the config or a bug in one of the evaluation scripts for which we ran out of time for fixing. \textbf{Question 5.1}: We will report the runtime on the real datasets KITTI and 3DMatch, we indeed forgot to include them. \textbf{Question 5.2}: We will consider adding synthetic experiments of common other registration algorithms. The purpose of the evaluation section 5.1 is mainly for comparing the only available globally optimal solver STRIDE regarding registration accuracy. Also, the solver STRIDE is extremely slow and not scalable at all for more than 100 points, this is why we cannot use it in the experiments 5.2 and 5.3.
+\textbf{Question 5.3}: We will attempt to do at least 10, maybe 50.\\
+\textbf{Question 5.4}: Due to random subsampling, using less points may only make our algorithm look less accurate compared to the others, not more accurate. But we fully agree that the experiments should be done under the same conditions for comparability. We will attempt to reproduce all the numbers ourselves under the same conditions instead of reporting from \cite{zhang20233d}.
+We will add qualitative results (i.e. example of registered point clouds) if space permits.
+
+\textbf{Response to reviewer 3}. We indeed did not tune the parameters and still got top-three results on KITTI compared to SoTa. We are confident that we will find the issue with the FPFH descriptor on 3DMatch, and obtain overall more consistent evaluation results that we will also discuss more thoroughly. We will add the info how much time each submodule of the algorithm takes.
+Regarding Figure 1 missing explanations, we indeed see now that identifiers like $\vc_i$, $\vt$ and $\epsilon$ are not present in the illustration, we apologize for the confusion. We do not see any problem with neither Eq. (10) nor Eq. (11), could you please elaborate ?
+
+
+
+%%%%%%%%% REFERENCES
+{
+    \small
+    \bibliographystyle{ieeenat_fullname}
+    \bibliography{main}
+}
+
+\end{document}

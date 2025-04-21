@@ -1,0 +1,22 @@
+
+\textbf{Down-projecting the lower bound from TIMS-Rot}. After solving the TIMS-Rot problem, we can obtain from it a lower bound on the original registration problem (Eq. \ref{eq:pcr-tls}). We first obtain from (already minimized) WLS relaxation the number of potential inliers $N_{in}$ and the inlier score value $W_{in}$:
+
+
+\begin{equation}
+	\label{eq:wls-relax-info}
+	\begin{aligned}
+		N_{in} &:= \sum_{i=1}^{N} (1 - o_i)\\
+		W_{in} &:= \sum_{i=1}^{N} (1 - o_i) \left(w_i r_i  + (1 - w_i) r_{min}^i \right)
+	\end{aligned}
+\end{equation}
+
+TODO prove. after theorem 6 turns out to be wrong, do we need to alter this formula? like do we already count each vertex touched by at least one edge?\\
+\begin{equation}
+	\label{eq:lb-downprojection}
+	\begin{aligned}
+		R_{in} &= \sqrt{\frac{2 N_{in} + N}{N^2}}\\
+		TLS_{in} &= \frac{W_{in}}{N \cdot R_{in}}\\
+		TLS_{out} &= (1 - R_{in}) \epsilon^2\\
+		project-lb  &= tls_{in} + tls_{out}
+	\end{aligned}
+\end{equation}

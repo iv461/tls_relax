@@ -1,0 +1,132 @@
+% Here are generic Math commands and also definitions of identifiers specific to our stuff
+
+\usepackage{algorithmicx}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{amsfonts,amsthm}
+\usepackage[T1]{fontenc} %https://tex.stackexchange.com/a/392210
+\usepackage{adjustbox}
+\usepackage{bm}
+%https://tex.stackexchange.com/questions/339297/how-to-identify-the-points-of-intersection-between-two-circles-and-coloring-the
+\usepackage{tikz}
+\usepackage{multirow}
+\usepackage{tkz-euclide}
+\usetikzlibrary{matrix, positioning}  % For matrix and positioning
+
+%\usetkzobj{all}
+
+\newcommand{\code}[1]{\texttt{#1}} 
+
+
+% real vector spaces
+\newcommand{\Rone}{\mathbb{R}}
+\newcommand{\Rtwo}{\mathbb{R}^2}
+\newcommand{\Rthree}{\mathbb{R}^3}
+\newcommand{\RthreeBythree}{\mathbb{R}^{3 \times 3}}
+\newcommand{\RthreeByN}{\mathbb{R}^{3 \times N}}
+
+
+% Groups
+\newcommand{\SOtwo}{\mathbf{SO(2)}}
+\newcommand{\SEtwo}{\mathbf{SE(\textrm{2})}}
+\newcommand{\SOthree}{\mathbf{SO(3)}}
+\newcommand{\SEthree}{\mathbf{SE(\textrm{3})}}
+\newcommand{\SUtwo}{\mathbf{SU(2)}}
+
+% theorem command definitions
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+% Redefine the keywords for algorithms since we don't mainly care about invariants as theoretical computer scientist do
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+% argmin and argmax
+\DeclareMathOperator*{\argmin}{argmin} % no space, limits underneath in displays
+\DeclareMathOperator*{\argmax}{argmax} % no space, limits underneath in displays
+
+% Tired of typing \mathbf{M} ? Well, real mathematicians just type M :) 
+% But since we are engineers, we need some highlighting, and to type less, we define some shortcuts:
+% (The following commands/the idea is borrowed from the LateX source of https://arxiv.org/abs/1905.12536)
+\newcommand{\M}[1]{{\bm #1}} 
+\newcommand{\MA}{\M{A}}
+\newcommand{\MB}{\M{B}}
+\newcommand{\MC}{\M{C}}
+\newcommand{\MD}{\M{D}}
+\newcommand{\ME}{\M{E}}
+\newcommand{\MJ}{\M{J}}
+\newcommand{\MK}{\M{K}}
+\newcommand{\MG}{\M{G}}
+\newcommand{\MM}{\M{M}}
+\newcommand{\MN}{\M{N}}
+\newcommand{\MP}{\M{P}}
+\newcommand{\MQ}{\M{Q}}
+\newcommand{\MU}{\M{U}}
+\newcommand{\MR}{\M{R}}
+\newcommand{\MS}{\M{S}}
+\newcommand{\MI}{\M{I}}
+\newcommand{\MV}{\M{V}}
+\newcommand{\MF}{\M{F}}
+\newcommand{\MH}{\M{H}}
+\newcommand{\ML}{\M{L}}
+\newcommand{\MO}{\M{O}}
+\newcommand{\MT}{\M{T}}
+\newcommand{\MX}{\M{X}}
+\newcommand{\MY}{\M{Y}}
+\newcommand{\MW}{\M{W}}
+\newcommand{\MZ}{\M{Z}}
+
+% vectors
+\newcommand{\va}{\boldsymbol{a}} 
+\newcommand{\vh}{\boldsymbol{h}} 
+\newcommand{\vb}{\boldsymbol{b}}
+\newcommand{\vc}{\boldsymbol{c}}
+\newcommand{\vd}{\boldsymbol{d}}
+\newcommand{\ve}{\boldsymbol{e}}
+\newcommand{\vf}{\boldsymbol{f}}
+\newcommand{\vg}{\boldsymbol{g}}
+\newcommand{\vk}{\boldsymbol{k}}
+\newcommand{\vn}{\boldsymbol{n}}
+\newcommand{\vo}{\boldsymbol{o}}
+\newcommand{\vp}{\boldsymbol{p}}
+\newcommand{\vq}{\boldsymbol{q}}
+\newcommand{\vr}{\boldsymbol{r}}
+%\newcommand{\vs}{\boldsymbol{s}}
+\newcommand{\vu}{\boldsymbol{u}}
+\newcommand{\vv}{\boldsymbol{v}}
+\newcommand{\vt}{\boldsymbol{t}}
+\newcommand{\vxx}{\boldsymbol{x}} 
+\newcommand{\vy}{\boldsymbol{y}}
+\newcommand{\vw}{\boldsymbol{w}}
+\newcommand{\vzz}{\boldsymbol{z}} 
+
+% Norms
+\newcommand{\normsq}[1]{\left\|#1\right\|^2}
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+
+% Other useful matrix commands
+\newcommand{\eye}{{\mathbf I}}
+\newcommand{\diag}[1]{\mathrm{diag}\left(#1\right)}
+%\newcommand{\trace}[1]{\mathrm{tr}\left(#1\right)}
+\newcommand{\trace}{\textrm{tr}}
+%\newcommand{\transposed}{\mathrm{T}}
+\newcommand{\transposed}{\mathsf{T}}
+\newcommand{\Set}[1]{\mathcal{#1}}
+\newcommand{\EmptySet}{\emptyset}
+
+
+% paper-specific names to prevent to enable consistency 
+\newcommand{\TLS}{truncated least squares}
+\newcommand{\MyAlgo}{OptiPose}
+\newcommand{\WLSRelax}{WLS relaxation}
+
+\newcommand{\PoseEst}{\ensuremath{(\Bar{\MR}, \Bar{\vt})}}
+\newcommand{\RangeOneToN}{\ensuremath{ \{1, \cdots, N\} }}
+\newcommand{\epssq}{\ensuremath{\epsilon^2}}
+
+\newcommand{\Rc}{\ensuremath{\MR_c}}
+%\newcommand{\TODO}[1]{\hl{\textit{#1}}}

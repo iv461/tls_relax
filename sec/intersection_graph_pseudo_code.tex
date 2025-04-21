@@ -1,0 +1,22 @@
+\begin{algorithm}[!ht]
+	\caption{Compute intersection graph}
+	\label{alg:intersection-graph}
+	\begin{algorithmic}[1]
+		\Require{Point sets $\MP, \MQ \in \RthreeByN$}
+		\Ensure Intersection graph $G$ (Def. \ref{def:intersection-graph})
+		\hypertarget{ref:glob}{
+			\Function{\code{compute\_igraph}}{$\MP, \MQ$}}
+        \State $V \gets \RangeOneToN, E \gets \emptyset$
+        \For{$i = 1$ to $N$}
+            \For{$j = i+1$ to $N$}
+                \State $\va_{ij} \gets \vp_i - \vp_j$
+                \State $\vb_{ij} \gets \vq_i - \vq_j$
+                \If{$| \norm{\va_{ij}} - \norm{\vb_{ij}} | \leq 2 \epsilon$}
+                    \State $E \gets E \cup \{(i, j), (\va_{ij}, \vb_{ij})\}$
+                \EndIf
+            \EndFor
+        \EndFor
+        \State \Return $G = (V, E)$
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}

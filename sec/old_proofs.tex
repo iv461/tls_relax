@@ -1,0 +1,25 @@
+ 
+    Using the triangle inequality $\norm{\va + \vb} \leq \norm{\va} + \norm{\vb} \iff \norm{\va + \vb} - \norm{\vb} \leq \norm{\va}$
+    
+    Using the (reverse) triangle equality and the fact that the rotation is an isometry:
+    \begin{equation}
+		\begin{aligned}
+             &| \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} |\\
+             =&| \norm{\vp_i - \vp_j} - \norm{\MR(\vq_i - \vq_j)} |\\
+             \leq & \norm{ \vp_i - \vp_j - \MR (\vq_i - \vq_j)} \\
+             =&\norm{ \vp_i - \MR \vq_i + \vt + \MR \vq_j - \vt - \vp_j} \\
+             \leq &| \norm{\vp_i - \MR \vq_i + \vt} + \norm{\MR \vq_j - \vt - \vp_j} |\\
+             =  &| \norm{\vp_i - \MR \vq_i + \vt} + \norm{\vp_j - (\MR \vq_j - \vt)} |\\
+             =   &| \norm{\vp_i - \MR \vq_i + \vt} + \norm{\vp_j - \MR \vq_j + \vt} |\\
+            \end{aligned}
+	\end{equation}
+ Therefore 
+    \begin{equation}
+		\begin{aligned}
+         &\exists (\mathbf{R}, \vt) \in \SEthree:\\
+            &\norm{\vp_i - \MR \vq_i + \vt} \leq \epsilon\\
+            \land &\norm{\vp_j - \MR \vq_j + \vt} \leq \epsilon\\
+        \implies & | \norm{\vp_i - \MR \vq_i + \vt} + \norm{\vp_j - \MR \vq_j + \vt} | \leq 2 \epsilon \\
+        \implies & | \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} | \leq 2 \epsilon \\
+            \end{aligned}
+	\end{equation}

@@ -1,0 +1,70 @@
+Globally optimal Point cloud registration with intersection graphs. 
+
+Intro: 
+
+Why ? Fast global optimization of the Truncated least squares function solves the point cloud registration problem, even in case of extreme outlier rates as shown previously. The TLS function is better than maximizing the number of inliers (maximum consensus) since, this has been shown previously many times, e.g. in MAC (CVPR 2024), but also in older works such as MLESAC. The TLS function is easily resilient up to 90\% outliers, a property not achieved by many other problem formulations. 
+
+We focus on optimizing the TLS objective and do to deal with the properties of it as a statistical estimator -- it has been shown to perform very well. 
+
+We are interested in global algorithms with correctness guarantees, i.e. certifiable algorithms. The algorithm should always output a valid upper bound on the estimation error. There already many heuristic algorithms out there.
+
+All previous algorithms were very slow, we show the first algorithm that runs in real-time, meaning under 100ms on instances that are large enough to be of practical relevance. 
+Many methods for global optimization have been  attempted, Branch-and-Bound 
+
+The SDP relaxation have led to algorithms dubbed the \textit{first polynomial-time algorithm}. Altought it is true that their worst-case runtime is polynomial due to the fact that they are solvable with interior point solvers, the SDP relaxation is not able to solve all instances. ... (TODO write from intro)
+
+We propose in this paper a geometric approach that enumerates 
+convex regions combined with Branch-and-Bound to prune candidates.
+
+This method is more generally known as enumeration of convex regions, first proposed in TODO. It can be implemented easily for the 1D-case, known as the interval stabbing algorithm (TODO cite bustos and CHin and Yang 2020). It was however previously unknown how to generalize it to multiple dimensions, only 1D and 2D versions (TODO yang et al) existed. 
+
+We are to our knowledge the first to use concept of an intersection graph to model this geometric problem. It turns out that intersection graphs are very well suited to model outlier-robust TLS problems since they arise naturally from the same geometric problem. 
+
+By using maximal clique enumeration on intersection graphs, we can enumerate the convex regions and therefore the local minimas, yielding the global optimum. 
+
+Intersection graphs also are a handy tool enabling us to rigorously analyze our algorithm and prove it's global optimality. We also show that our intersection graph is equivalent to the recently proposed compatibility graph that were motivated solely by geometric  observations.
+
+Main contributions: 
+- A real-time capable algorithm for solving TLS point cloud registration to certifiable global optimality 
+- General approach for enumerating the convex regions of the TLS objective using maximal cliques on intersection graphs 
+- Evaluation on adversarial instances for showing global optimality
+
+Related work. 
+
+Heuristic methods: Many heuristic methods attepmt to find local only solutions, given. 
+Ransac is slow and reuiqres exponential time but recently due to the advances in understanding the geometry of point cloud registration, it has been made robust to over 90\% outliers (cite RANSIC etc.)
+BUT Other methods usually considered maximum consensus, that often finds a worse solution that Truncated Least Squares estimator
+
+
+3. Our stuff: 
+
+Problem definition: truncated least squares point cloud registraion. 
+How do we solve this ? We first define what inliers are: Given the globally optimal transform, they are all terms that are not truncated. 
+Second observation: Knowing the inliers essentially solves the TLS problem since the only thing remaining is to compute the least-squares solution 
+using only these inliers. 
+Therefore, given the optimal inlier set, we obtain therefore the globap otpimum. 
+We can therefore find the global optimum by simply enumerating all inlier sets and solving with least-squares. 
+
+- T-sets. We define the transformation sets ...
+- The intersection graph
+- An inlier set is a non-empty instersection of T-Sets
+- Checking for non-empty intersection can be done using least-squares solving
+- Inlier sets are cliques in the grap -> 
+- The inlier set is maximal 
+
+Pruning the search space using BnB 
+
+To speed up the clique enumeration, i.e. the enumeration of local optimas, we use branch-and-bound. 
+Our use of Branch-and-Bound differs however from many other proposed methods. Recall that lemma 1 states that we can either solve for the (contious) 3D-transformation or the (discrete) inlier set. We have therefore two "perspectives" on the problem: The continous and the discrete.
+
+We do not use BnB for branching over continuous space of 3D-transforms that, but instead branch only over the 3D-space of rotations. 
+
+We do not use branching over rotations directly to narrow down the rotational space but instead to prune the intersection graph (i.e. narrow the combinatorial search space). 
+At the same time, we use also use the (pruned) intersection graph to compute the degeneracy-based lower bound, pruning additionally the rotational space.
+
+Pruning edges inside rotation nodes.
+
+The 
+
+
+

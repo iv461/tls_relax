@@ -1,0 +1,99 @@
+\subsection{Weighted Least Squares (WLS) - Convex Relaxation}
+In the following, we derive a convex relaxation for the TLS problem \ref{eq:pcr-tls} over a given interval $\mathcal{X}_r \subseteq \SOthree$. To show the global optimality of Branch-and-Bound, we only need to show that the proposed function is indeed a convex relaxation.
+
+\begin{theorem}
+	\label{thm:wls-relax}
+	Given are the minimum and maximum of $r_i = ||\mathbf{a}_i - \mathbf{R} \mathbf{b}_i||_2^2$ over all $\mathbf{R} \in \mathcal{X}_r$, named  $r_{min}^i$ and $r_{max}^i$. Then, $\text{\WLSRelax}$ is a convex  relaxation of \ref{eq:pcr-tls} over $\mathcal{X}_r$:
+	\begin{equation}
+		\label{eq:tls-wls-relaxation}
+		\begin{aligned}	
+			\mathrm{\WLSRelax}:\quad
+			\sum_{i=1}^{N} (1 - o_i) \left(w_i r_i  + (1 - w_i) r_{min}^i \right) + \sum_{i=1}^{N} o_i\epsilon^2\\
+		\end{aligned}
+	\end{equation}
+	
+	with the weights $w_i$ defined as:
+	\begin{equation}
+		\begin{aligned}	
+			w_i  &= 
+			\begin{cases}
+				\frac{\epsilon^2 - r_{min}^i}{r_{max}^i - r_{min}^i} &  r_{max}^i > \epsilon^2\\
+				1 & \, \text{otherwise}
+			\end{cases}
+		\end{aligned}
+	\end{equation}
+	
+	and the binary variables $o_i$ deciding whether the i'th residual is certainly an outlier (1) or not (0):
+	
+	\begin{equation}
+		\begin{aligned}	
+			o_i &= \begin{cases}
+				1 &  r_{min}^i > \epsilon^2\\
+				0 & \, \text{otherwise}
+			\end{cases}
+		\end{aligned}
+	\end{equation}
+	
+\end{theorem}
+
+The idea of our relaxation is that non-convexity arises only because of truncation -- we therefore apply an affine transformation to each $r_i$ such that it $\leq \epsilon^2$ over the given interval and thus each term becomes convex. A proof for this relaxation is given in appendix \ref{proof:tls-convex-wls-relaxation}.
+
+The interval $[r_{min}^i, r_{max}^i]$ of the residuals can be computed easily using analytic formulas: Given spherical intervals (balls) with center $\mathbf{R}_c$ and radius $n_r$, for the rotation model $||\mathbf{a}_i - \mathbf{R} \mathbf{b}_i||_2^2$, they are (see appendix \ref{thm:residual-rotation} for a proof):
+\begin{equation}
+	\label{eq:residual-minmax-rotation}
+	\begin{aligned}
+		r_{min}^i = \normsq{\mathbf{a}_i} + \normsq{\mathbf{b}_i} - 2 \, ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\max(\theta - n_r, 0))\\
+		r_{max}^i = \normsq{\mathbf{a}_i} + \normsq{\mathbf{b}_i} - 2 \, ||\mathbf{a}_i|| \, ||\mathbf{b}_i|| \cos (\min(\theta + n_r, \pi))
+	\end{aligned}
+\end{equation}
+
+with 
+\begin{equation}
+	\begin{aligned}
+		\theta = \arccos \left(\frac{(\mathbf{R}_c \, \mathbf{a}_i)^\transposed\mathbf{b}_i}{\norm{\mathbf{a}_i} \, \norm{\mathbf{b}_i}} \right)
+	\end{aligned}
+\end{equation}
+
+Our convex relaxation can be computed very fast: We only need to compute the interval and weights for each point, which takes linear time in the number of points $N$, i.e. $\mathcal{O}(N)$.
+
+\subsection{Minimizing WLS-Relaxation}
+After computing our convex relaxation, we need to find it's global optimum to obtain a lower bound.
+Since this is only a weighted least squares problem, it can be solved in practice very fast with a specialized non-iterative solver.\\
+\textbf{The lower bound sub-problem}. Since the relaxation is valid only over a given interval (the node of BnB), we need to consider however a inequlity-constrained version of this problem to find the lower bound. 
+Still, finding the global optimum of the WLS relaxation remains computationally very easy -- it takes again only linear time and is in practice extremely fast, requiring only 100$\mu s$ - 300$\mu s$.
+
+The feasible set of the problem is a ball $\MB(\vc, n_r)$ with center $\mathbf{c}$ and radius $n_r$, defined over the Euclidean space as $\MB(\vc, n_r) :=\{\mathbf{x} \in \Rone^n : || \mathbf{c} - \mathbf{x}|| \leq n_r \}$. Over non-Euclidean space of rotations, using the geodesic distance $d_{\angle}(\mathbf{R}_c, \mathbf{R})$, we use the similar definition: $\{\mathbf{R} \in \SOthree : d_{\angle}(\mathbf{R}_c, \mathbf{R}) \leq n_r\}$. 
+We introduce now the constraint 
+$d_{\angle}(\mathbf{R}_c, \mathbf{R}) \leq n_r$, that enforces the solution to be inside the ball where the relaxation is valid. 
+
+The problem of minimizing the WLS convex relaxation becomes a a weighted least squares problem (omitting constant terms):
+
+\begin{equation}
+	\label{eq:tls-r-opt-branch}
+	\begin{aligned}
+		\min_{\mathbf{R} \in \SOthree} \quad &\sum_{i=1}^{N} w_i \normsq{\mathbf{a}_i - \mathbf{R}\mathbf{b}_i}\\
+		\text{subject to} \quad  &d_{\angle}(\mathbf{R}_c, \mathbf{R}) \leq n_r
+	\end{aligned}
+\end{equation}
+where $\mathbf{R}_c$ is the node center and $n_r$ the node radius.\\
+%(Note that $d_{\angle}(\mathbf{R}_c, \mathbf{R}) \leq n_r \iff \trace(\mathbf{R}_c^\transposed \mathbf{R}) \geq 2 \cos(n_r) - 1$)
+\textbf{Active-set solver for the rotation sub-problem}. Without the constraint, this problem is the well-known \textit{Wahba-Problem} that is easily solvable with the SVD-algorithm \cite{Kabsch-1976-Point-set-alignment} \cite{8594296} \cite{Lawrence2019APA} \cite{sorkine2017least}. 
+
+We combine this observation with the idea of the \textit{active-set} method to solve the constrained problem by splitting it into two simpler sub-problems: First, we just ignore the constraint and solve it with the SVD-algorithm. If the constraint happens to be satisfied, we already have the solution. If not, we know that the inquality-constraint has to be satisfied as an equality \cite[p.467]{Numerical-Optimization-Nocedal-Wright}.
+The equality-constraint then requires the rotation to have a rotation angle of exactly $n_r$. 
+Since every rotation can be described as a rotation over an axis and angle (Euler's theorem) and the rotation angle is already given by the constraint, the problem simplifies to only finding the axis.\\
+\textbf{Solving the equality-constrained case}.
+Solving the equality-constrained version of problem \ref{eq:tls-r-opt-branch} is equivalent to the following non-convex problem over the rotation axis $\mathbf{n}$:
+
+\begin{equation}
+	\label{eq:rot-est-constrained-qcqp-main}
+	\begin{aligned}
+		\argmin_{\mathbf{n} \in \Rthree} \quad &-\left(\mathbf{n}^\transposed \mathbf{A} \mathbf{n} + 2 \mathbf{g}^\transposed \mathbf{n} \right)\\
+		\text{subject to} \quad &\norm{\mathbf{n}} = 1\\
+	\end{aligned}
+\end{equation}
+A proof of equivalence including the exact definition of $\mathbf{A}$ and $\mathbf{g}$ are given in appendix \ref{proof:wls-relax-eq-constrained-rotation}. This problem is based on the quaternion solution to the Wahba-problem (\textit {Davenport's Q}) \cite{davenportsQ} \cite{8594296} and the axis-angle definition of quaternions for separating out the axis.
+
+The optimization problem \ref{eq:rot-est-constrained-qcqp-main} can again be solved very efficiently by an eigenvalue-decomposition of the 3x3 cross-correlation matrix (that was already computed by the SVD-algorithm) with a subsequent root-finding \cite{10.1007/978-3-642-75536-1_57}. Solving the equality-constrained therefore even takes \textit{constant} time, i.e. is not dependent on the number of points at all.
+
+Overall, our active-set solver for minimizing the convex relaxation is extremely efficient -- in finds the global optimum in linear time. 

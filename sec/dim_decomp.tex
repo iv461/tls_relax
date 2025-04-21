@@ -1,0 +1,11 @@
+
+\subsection{Dimensionality decomposition: globally optimal or not ?}
+We have described so far only how to solve the rotation problem using the TLS objective. To solve for the full 6 Degrees of Freedom (DoF), i.e. both rotation and translation, we apply the decomposition technique introduced in Yang et al. (TEASER \cite{Yang20tro-teaser}). They popularized the idea of first removing the translation and then solving sequentially for rotation and translation. This idea works well in practice and spawned recently many other works using the same idea or variations of it, e.g. \cite{Yang20tro-teaser} \cite{10432947} and \cite{9878458} \cite{9879801}. However, Yang et al. do not state whether this decomposition preserved optimality -- they do not comment on the equivalence of both optimization problems. It was recently hinted that this idea may break the global optimalit, but with no counter-examples, a final anwswer was unknown. 
+
+We give a definite anwswer to this -- it unfortunatelly breaks global optimality. 
+On difficult instances, we generated many counter-examples where solving sequentially for rotation and translation does not yield the overall globally optimal 3D-transformation (see sec TODO).
+
+At the same time, we are able to "save" the idea that works well in practice by discovering how the rotation-subproblem is related to the original registration problem: Although it is not equivalent, the TIMS-Rot problem provides a lower bound on the TLS-Reg problem.
+
+This gives a valuable insight into why heuristic methods using this idea work so well in practice (TODO global optimum is close or what?). 
+We output this sub-optimality explicitly and therefore obtain a certifiable algorithm (TODO yeah...)\\

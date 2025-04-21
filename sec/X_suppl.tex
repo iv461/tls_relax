@@ -1,0 +1,171 @@
+\clearpage
+\setcounter{page}{1}
+\maketitlesupplementary
+
+\begin{theorem}[\textbf{Knowing the ground-truth inliers solves the TLS-problem}]
+	Given the ground-truth inlier set $\mathcal{I}^*$, the global optimum $(\MR^*, \vt^*)$ is found by solving the least-squares problem:
+	\begin{equation}
+		\begin{aligned}
+			(\MR^*, \vt^*) = \argmin_{(\MR, \vt) \in \SEthree} \sum_{i \in \mathcal{I}^*} \normsq{\MR \vp_i - \vq_i + \vt}
+		\end{aligned}
+	\end{equation}
+\end{theorem}
+
+\begin{proof}
+    \label{proof:gt-corrs-solves-tls}
+	Since we know the ground-truth inlier set, we know which residuals are less or equal $\epssq$ and therefore not truncated. Since $\min(x, \epssq) = x$ for all $x \leq \epssq$, we can equivalently rewrite the TLS-objective \ref{eq:pcr-tls} as:
+    \begin{equation}
+	\begin{aligned}
+		&\sum_{i=1}^{N} \min \left(\normsq{\MR \vp_i - \vq_i + \vt}, \epsilon^2 \right)\\
+        &= \sum_{i \in \mathcal{I}^*} \normsq{\MR \vp_i - \vq_i  + \vt}  + \sum_{i \in \{1, \cdots, N\}  \setminus \mathcal{I}^*} \epsilon^2
+	\end{aligned}
+    \end{equation}
+    Since the second sum is constant, it does not affect the minimizer of the least-squares term (the first sum). Therefore, minimizing only  the first, i.e. solving the least-squares problem solves the TLS-problem.
+\end{proof}
+
+
+\begin{lemma}[\textbf{Minimum of rotation residual}]\label{lemma:ls-rot}
+	The minimum for all $\va, \vb \in \Rthree$
+	\begin{equation}
+		\begin{aligned}
+			&\min_{\MR \in \SOthree} \normsq{\MR \va - \vb}\\
+			&= \left( \norm{\va} - \norm{\vb} \right)^2
+		\end{aligned}
+	\end{equation}
+\end{lemma}
+
+\begin{proof}
+\begin{equation}
+	\begin{aligned}
+		&\min_{\MR \in \SOthree} \normsq{\MR \va - \vb}\\
+		=&\min_{\MR \in \SOthree} \left( \MR \va - \vb \right)^\transposed \left( \MR \va - \vb \right)\\
+		=&\min_{\MR \in \SOthree} (\MR\va)^\transposed \MR\va - 2 (\MR \va)^\transposed \vb + \vb^\transposed \vb\\
+		=&\min_{\MR \in \SOthree} \va^\transposed \MR^\transposed \MR \va - 2 (\MR \va)^\transposed \vb + \vb^\transposed \vb\\
+		=&\min_{\MR \in \SOthree} \va^\transposed \va - 2 (\MR \va)^\transposed \vb + \vb^\transposed \vb\\
+		=&\min_{\MR \in \SOthree} \normsq{\va} - 2 (\MR \va)^\transposed \vb  + \normsq{\vb}\\
+		=& \normsq{\va} - 2 \norm{\va} \norm{\vb}  + \normsq{\vb}\\
+		=& \left( \norm{\va} - \norm{\vb} \right)^2
+	\end{aligned}
+\end{equation}
+	
+\end{proof}
+
+\begin{lemma}[\textbf{Least-squares solution with two points}]\label{lemma:ls-two-points}
+	In the special case of two points, the least squares solution for point cloud registration is
+	\begin{equation}
+		\begin{aligned}
+			\min_{(\MR, \vt) \in \SEthree} & \normsq{\MR \vp_i - \vq_i  + \vt} +  \normsq{\MR \vp_j - \vq_j  + \vt}\\
+			&= \frac{1}{2} \left( \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} \right)^2
+		\end{aligned}
+	\end{equation}
+	Both residual terms are equal at the minimum.
+\end{lemma}
+
+\begin{proof}
+	A well known result is that the optimal translation is related to the optimal rotation and the centroids of both point clouds (see e.g \cite{Kabsch-1976-Point-set-alignment, sorkine2017least}):
+	\begin{equation}
+		\begin{aligned}
+			\vt &= \bar{\vq} - \MR \bar{\vp}\\
+			\bar{\vp} &= \frac{\vp_i + \vp_j}{2}, \, \bar{\vq} = \frac{\vq_i + \vq_j}{2}
+		\end{aligned}
+	\end{equation}
+	We insert the optimal translation into the objective and simplify:
+	\begin{equation}\label{eq:insert-t-opt}
+		\begin{aligned}
+			&\normsq{\MR \vp_i - \vq_i  + (\bar{\vq} - \MR \bar{\vp})} +  \normsq{\MR \vp_j - \vq_j  + (\bar{\vq} - \MR \bar{\vp})}\\
+			=&\normsq{\MR (\vp_i - \bar{\vp}) - (\vq_i -\bar{\vq})} + \normsq{\MR (\vp_j - \bar{\vp}) - (\vq_j -\bar{\vq})} \\
+			=&\normsq{\MR \left(\vp_i - \frac{\vp_i + \vp_j}{2} \right) - \left(\vq_i - \frac{\vq_i + \vq_j}{2} \right)}\\
+			+ &\normsq{\MR \left(\vp_j - \frac{\vp_i + \vp_j}{2} \right) - \left(\vq_j -\frac{\vq_i + \vq_j}{2} \right)} \\
+			=&\normsq{ \frac{1}{2}(\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j))}\\
+			+ &\normsq{ \frac{1}{2}(\MR (\vp_j - \vp_i ) - (\vq_j - \vq_i))}\\
+			=& 2\normsq{ \frac{1}{2}(\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j))}\\
+			=& \frac{1}{2}\normsq{\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j)}\\
+		\end{aligned}
+	\end{equation}
+	We just showed that both residual terms are equal at the optimal translation.	
+	What remains is to optimize over the rotation $\MR$. By lemma \ref{lemma:ls-rot}, the minimum over rotations is:
+	\begin{equation}
+		\begin{aligned}
+			&\min_{(\MR, \vt) \in \SEthree} \normsq{\MR \vp_i - \vq_i  + \vt} +  \normsq{\MR \vp_j - \vq_j  + \vt}\\
+			&=\min_{\MR \in \SOthree} \frac{1}{2}\normsq{\MR (\vp_i - \vp_j ) - (\vq_i - \vq_j)}\\
+			&= \frac{1}{2} \left( \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} \right)^2
+		\end{aligned}
+	\end{equation}
+\end{proof}
+
+\begin{theorem}[\textbf{Non-empty intersection of T-Sets is equivalent to compatible TIMs}]
+	\begin{equation}
+		\begin{aligned}
+			&\mathcal{T}_i \cap \mathcal{T}_j \neq \emptyset\\
+			\iff &\exists (\MR, \vt) \in \SEthree:\\
+			&\norm{\MR \vp_i - \vq_i + \vt} \leq \epsilon\\
+			\land &\norm{\MR \vp_j - \vq_j + \vt} \leq \epsilon\\
+			\iff &| \norm{\va_{ij}} - \norm{\vb_{ij}} | \leq 2 \epsilon
+		\end{aligned}
+	\end{equation}
+	where 
+	\begin{equation}
+		\label{eq:tims}
+		\begin{aligned}
+			\va_{ij} &= \vp_i - \vp_j\\
+			\vb_{ij} &= \vq_i - \vq_j
+		\end{aligned}
+	\end{equation}
+\end{theorem}
+
+\begin{proof}
+	\label{proof:non-empty-intersection-implies-tims-compat}
+	Whether there exists a $(\MR, \vt) \in \SEthree$ such that $\norm{\MR \vp_i - \vq_i  + \vt} \leq \epsilon$ is equivalent to whether the minimum is $\leq \epsilon$, i.e. whether $\min_{(\MR, \vt) \in \SEthree} \norm{\MR \vp_i - \vq_i  + \vt} \leq \epsilon$ holds.
+	By lemma \ref{lemma:ls-two-points} by minimizing the sum of two residuals, at the minimum they are both equal and therefore if their sum is $\leq 2\epssq$, they both are $\leq \epssq$. We conclude therefore
+	\begin{equation}
+		\begin{aligned}
+			&\mathcal{T}_i \cap \mathcal{T}_j \neq \emptyset \iff\\
+			&\min_{(\MR, \vt) \in \SEthree} \normsq{\MR \vp_i - \vq_i  + \vt} + \normsq{\MR \vp_j - \vq_j  + \vt} \leq 2\epssq\\
+			& \iff \frac{1}{2} \left( \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} \right)^2 \leq 2\epssq\\
+			& \iff | \norm{\vp_i - \vp_j} - \norm{\vq_i - \vq_j} | \leq 2\epsilon\\
+			& \iff | \norm{\va_{ij}} - \norm{\vb_{ij}} | \leq 2 \epsilon
+		\end{aligned}
+	\end{equation}
+\end{proof}
+
+\begin{lemma}[\textbf{Consensus sets are cliques in the intersection graph}]
+	Consensus sets are cliques in the intersection graph.
+\end{lemma}
+
+\begin{proof}
+	Cliques in the intersection imply by definition pairwise non-empty intersection of T-Sets. Since pairwise non-empty intersection is a necessary condition for total non-empty intersection and therefore consensus sets, consensus sets are cliques in the intersection graph.
+\end{proof}
+
+\begin{lemma}[\textbf{Maximal clique enumeration and global optimality}]
+	\label{lemma:max-clique-non-helly-app}
+	Maximal clique enumeration finds the ground-truth consensus set and therefore the global minimum of an instance if all maximal cliques of this instance are maximal consensus sets.
+\end{lemma}
+
+\begin{proof}
+	The key statement of the lemma is that if every maximal clique is a maximal consensus set, then subcliques of maximal cliques (which by definition are not maximal cliques) cannot be the ground truth inlier set. Consequently, they need not be enumerated. 
+
+	The global optimum lies in the union of all T-sets, i.e. $\bigcup_{i \in \RangeOneToN} \mathcal{T}_i$. Every vertex of a graph is contained in at least one maximal clique of that graph. Therefore, the global optimum is contained in at least one union $\bigcup_{i \in \vc} \mathcal{T}_i$ of a maximal clique $\vc$.
+
+	The intersection of the T-sets of any subclique contains the intersection of the T-sets of a maximal clique containing that subclique. Therefore, if the consensus set is maximal, the best solution (minimizing the TLS objective) that can be found among subcliques is no better than this maximal clique. If this holds for every maximal clique of an instance, then the ground-truth inlier set is not a subclique of any maximal clique, and therefore must itself be a maximal clique. Thus, enumerating maximal cliques will find the ground-truth consensus set if all maximal cliques of this instance are maximal consensus sets. v
+\end{proof}
+
+\label{proof:wls-interval-analysis-rotation}
+
+
+\begin{lemma}[\textbf{Consensus set size and TLS objective }]
+	Given an upper-bound $\text{UB}$ on the TLS objective, the ground-truth consensus set must have at least $d_{m}$:
+    \begin{equation}
+        \begin{aligned}
+            d_m = \lceil N - \text{UB} / \epssq \rceil
+        \end{aligned}
+    \end{equation}
+\end{lemma}
+
+\begin{proof}
+    By the definition of the TLS objective, 
+    $r_{in} + (N - d_m) \epsilon^2 \leq \text{UB}$ must hold, where $r_{in}$ is the (unknown) sum of the inlier residuals. Rearranging yields $d_m \geq r_{in}  + N - \text{UB} / \epssq$.
+    Since all the summands in the TLS objective are non-negative, $r_{in} = 0$ is a valid lower bound. Since the number of elements in the consensus set $d_m$ must be an integer, we conclude that $d_m = \lceil N - \text{UB} / \epssq \rceil$.
+\end{proof}
+
+
+

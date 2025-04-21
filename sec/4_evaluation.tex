@@ -1,0 +1,81 @@
+
+\section{Experiments}
+In this section, we present experiments where we study the intersection graphs arising from the robust point cloud registration problem. We evaluate the runtime of state-of-the-art maximum clique finding algorithms.
+
+\label{sec:evaluation}
+We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32GiB of RAM.
+\subsection{Synthetic experiments}
+
+
+\subsection{Synthetic experiments}
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.49\linewidth]{figures/execution_time_over_outlier_rate_boxplot}
+	\includegraphics[width=0.49\linewidth]{figures/rotation_error_over_outlier_rate.pdf}
+	\caption{Execution time and rotation error over different outlier rates with $N=100$ on synthetic data.}
+	\label{fig:execution-time-over-outlier-rate}
+\end{figure}
+
+We generate synthetic point clouds by sampling inliers from a unit cube $s \cdot [-1, 1]^3$ with scale $s$. We add uniform measurement noise by sampling a ball of radius $\epsilon^2$, and then sample outliers in the bounding box of the inliers, also uniformly. First, we set $s=10$ and $\epsilon=0.5$. As shown in Fig. \ref{fig:execution-time-over-outlier-rate}, the runtime is very low for $N =100$ and decreases until 90\% outlier-rate because the graph sparsity increases. Above 90\% outlier-rate, it increases because the number of visited cliques increases.
+
+\subsubsection{Scalability}
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.9\linewidth]{figures/scalability-synth}
+	\caption{Scalability on synthetic data, outlier rate $75\%$}
+	\label{fig:execution-time-over-n}
+\end{figure}
+
+We evaluate the scalability on synthetic data at $75\%$ outlier-rate, results are shown in Fig \ref{fig:execution-time-over-n}. Our solves is efficient since it implicitly prunes vertices based on the TLS objective.
+
+\subsubsection{Validity of the global optimality certificate}
+Even though GNC is a heuristic, based on our case analysis (Sec. \ref{sec:branching-over-comb}) it seems likely that GNC finds global minimum under certain conditions.
+We therefore test on synthetic data whether the global optimality certificate is valid, i.e. whether at termination, the lower bound is less or equal than the TLS objective at the ground-truth solution.
+We define the suboptimality $\eta$ of the solution based on the upper bound (UB), that is, the best known solution, and the lower bound (LB) \cite{9785843}
+\begin{equation}
+	\begin{aligned}    
+		\eta = \frac{\text{UB} - \text{LB}}{1 + |\text{UB}| + |\text{LB}|}
+	\end{aligned}
+\end{equation}
+We test with $N=100$, $\epsilon=0.5$ and vary the data scale $s$ from 3 to 100. We test for each scale outlier rates of $0\%, 30\%, 50\%, 90\%, 96\%$, and do 1000 trials for each combination.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.49\linewidth]{figures/certificate_validity_vs_scale}
+	\includegraphics[width=0.49\linewidth]{figures/eta_subopt_over_outlier_rate}
+	\caption{Amount of instances with valid global optimality certificate (i.e. valid suboptimality) on synthetic data, including achieved $\eta$-suboptimality.}
+	\label{fig:cert-validity}
+\end{figure}
+The results are shown in Fig. \ref{fig:cert-validity}, we clearly see that with a larger data scale, the likelihood of a valid certificate (and successful registration result) increases. While this observation alone could be explained solely by the solver being able to solve the problem more likely, we also see that the suboptimality increases for instances above 90\% outliers. This indicates that our solver is able to detect that some instances could not be solved to global optimality.
+Unfortunately, being only able to reject some and not all instances means our solver is currently neither globally optimal (being able to find the global minimum of every instance and outputting a valid lower bound on every instance), nor certifiable (outputting only a valid lower bound on every instance).
+
+\subsubsection{Comparison with SDP-relaxation solver STRIDE} Currently the only solver that can solve the TLS registration problem of size $N=100$ to proven global optimality is STRIDE \cite{9785843}. We compare it on our synthetic data to access the achieved suboptimality and estimation errors. We use the public MATLAB-implementation of the authors and use the MOSEK solver for the chordal initialization of STRIDE.
+We set $\epsilon = 0.5$, $N=30$ and perform three trials per outlier rate.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.49\linewidth]{figures/subopt_stride}
+	\includegraphics[width=0.49\linewidth]{figures/runtime_stride}
+	\caption{The reached suboptimality and the runtime using STRIDE over the outlier rate on synthetic data, $N=30$.}
+	\label{fig:stride-subopt-eval}
+\end{figure}
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.9\linewidth]{figures/rotation_error_stride}
+	\caption{Rotation error using STRIDE.}
+	\label{fig:stride-rot-err}
+\end{figure}
+
+The results are shown in Fig. \ref{fig:stride-subopt-eval}, STRIDE is able to find and certify the global optimum as long as the outlier rate is below 90\%. The runtime of STRIDE is even with as few as 30 points in the order of $10^3$ seconds. STRIDE achieves a similar rotation error compared to our solver in instances that could be solved (Fig. \ref{fig:stride-rot-err}). Note that the rotation error is meaningless for instances that STRIDE could not solve (i.e. above 80\%), since it is always able to detect them.
+
+\subsection{Results on 3DMatch dataset}
+\input{sec/eval-3DMatch-table}
+We evaluate our solver on the 3DMatch dataset \cite{zeng20163dmatch} 
+following \cite{SC2-PCR-Chen-2022-CVPR, zhang20233d} on all scenes. We evaluate the residual rotation (RE) and translation (TE) and the registration recall (RR). A registration is defined as successful if RE $\leq 15$ degrees and TE $\leq 30$ cm. We sub-sample the correspondeces to 500 and set the inlier-threshold to $\epsilon = 0.6$. For the other methods, we report the results from \cite{zhang20233d} since the test setup is identical. The results are shown in Tab. \ref{tab:3DMatch-results}.
+
+\subsection{Results on KITTI dataset}
+\input{sec/eval-kitti-table}
+
+We evaluate our method on the KITTI odometry dataset \cite{Kitti-Geiger2013IJRR} following \cite{SC2-PCR-Chen-2022-CVPR, zhang20233d} and similar to the 3DMatch dataset. A registration is defined as successful if RE $\leq 5$ degrees and TE $\leq 60$ cm.
+We sub-sample the correspondeces to 500 and set the inlier-threshold to $\epsilon = 0.6$. We set a time limit of 100 milliseconds. The FCGF \cite{9009829} descriptor has on average an outlier-rate of 75\%, while the FPFH has usually above 90\% outlier-rate. For the other methods, we report the results from \cite{zhang20233d} since the test setup is identical. The results are shown in Tab. \ref{tab:eval-kitti}, our method achieves comparable results to other state-of-the-art methods without dataset-specific tuning of parameters, outperformed only by MAC and SC$^2$-PCR.
+
+

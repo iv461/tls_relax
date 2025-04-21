@@ -1,0 +1,19 @@
+\begin{table}[!ht]
+    \centering
+    \caption{Registration accuracy on KITTI dataset in comparison with other methods:\label{tab:eval-kitti}}
+    \resizebox{\linewidth}{!}{
+      \begin{tabular}{l|rrr|rrr}
+      \hline
+      \multirow{2}[2]{*}{} Descriptor& \multicolumn{3}{c|}{FPFH} & \multicolumn{3}{c}{FCGF} \\
+            & \multicolumn{1}{l}{RR(\%)} & \multicolumn{1}{l}{RE(\textdegree)} & \multicolumn{1}{l|}{TE(cm)} & \multicolumn{1}{l}{RR(\%)} & \multicolumn{1}{l}{RE(\textdegree)} & \multicolumn{1}{l}{TE(cm)} \\
+      \hline
+      TEASER++\cite{Yang20tro-teaser}   &  91.17  &  1.03  & 17.98 & 94.96   &  0.38  & 13.69 \\
+      RANSAC  &  74.41  &  1.55  &  30.20 & 80.36  &  0.73  & 26.79 \\
+      CG-SAC\cite{quan2020compatibility}  & 74.23  & 0.73  & 14.02 & 83.24  & 0.56  & 22.96 \\
+      $\rm{SC}^2$-PCR\cite{SC2-PCR-Chen-2022-CVPR} & 99.64  &  0.32  & 7.23  & 98.20 & 0.33  & 20.95 \\
+      MAC \cite{zhang20233d} &  99.46  &  0.4  & 8.4  &  97.84 &  0.34  & 19.34 \\
+      \hline
+      \MyAlgo{} (Ours) &  95.50 & 0.77  & 16.43  &  96.76 & 0.34 & 20.59 \\
+      \hline
+      \end{tabular}}
+  \end{table}%

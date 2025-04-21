@@ -1,0 +1,25 @@
+\section{Related Work}
+\label{sec:related-work}
+
+Globally optimal and certifiable algorithms have been studied in computer vision \cite{10.1007/978-3-030-58539-6_18, 10023976, Convex-Relaxations-for-Pose-Graph-Optimization-With-Outliers} and robotics \cite{7759681}, both for point cloud registration (both robust and outlier-free \cite{8100078, GARCIASALGUERO2023103862}) and other problems in computer vision \cite{10378410}, but remained impractical for real-time applications because they were too slow. In the following, we briefly review algorithms for solving the robust point cloud registration problem with known correspondences, using either Truncated Least Squares (TLS) or the closely related Maximum Consensus (MC) formulation. We review only traditional methods even though deep learning approaches have been recently successful as well (e.g. \cite{9157005, bai2021pointdsc}), since neural networks greatly add to the difficulty of giving guarantees about the solution.
+
+\subsection{Heuristic methods}
+Algorithms based on randomly sampling a subset of correspondences and checking whether they are all inliers, i.e. RANSAC were used for a long time. Torr et al. \cite{TORR2000138} proposed with MLESAC not only to maximize the number of inliers, but also to consider the residuals, an idea similar to the Truncated Least Squares objective. Recently, variants of RANSAC that consider geometric compatibility have been proposed \cite{9052691, 9552513}, improving outlier robustness up to 95\%.
+Yang et al. \cite{Yang2020OneRT} presented TEASER++, a heuristic algorithm based on the TLS objective that provides many algorithmic insights and popularized the idea of finding cliques in compatibility graphs. They first construct a graph of compatible measurements and then prune outliers by finding the maximum clique. They then apply a dimensionality decomposition idea where they first solve for rotation using \textit{Graduated Non-Convexity} (GNC) and then separately over different dimensions of the translation using \textit{adaptive voting}. Separately from this heuristic algorithm, they propose a second globally optimal algorithm that uses semidefinite relaxations. However, it can only prove global optimality (i.e. \textit{certify}) for one subproblem at a time, i.e. rotation or translation, not the full 3D-transform. Finally, their algorithm is not globally optimal, since their proof requires the assumption that an instance is not "too hard", i.e. they make a priori unverifiable assumptions about the instance [Assump. 2, 3 in Thm.17]\cite{Yang20tro-teaser}. 
+
+Methods using compatibility graphs are popular for point cloud registration \cite{Yang20tro-teaser, SC2-PCR-Chen-2022-CVPR, 10161215, lim2024kissmatcherfastrobustpoint} and outlier removal \cite{7410607, 10091912, zhang20233d}. They either list all maximal cliques, or search for the largest maximal clique (the \textit{maximum} clique), which is generally NP-Hard \cite[p.15]{approx-algo-book-shmoys-et-al}. Some approaches such as ROBIN \cite{9562007} or CLIPPER \cite{10432947} approximate the maximum clique.
+Recently, the concept of dimensionality decomposition has gained popularity. The idea is to decompose the 6DoF problem into rotation and translation \cite{Yang2020OneRT, 9485090}, or even more \cite{9878458, 10656079} subproblems, which are then solved sequentially.
+However, solving these subproblems sequentially (even to global optimality) has not been shown to be equivalent to solving the original optimization problem -- as recently hinted, it very likely breaks global optimality \cite{9878458}.
+
+Other optimization methods for minimizing the TLS objective have been proposed, but they are either only heuristic, such as \cite{Barratt2020}, or not practical for higher dimensions \cite{doi:10.1080/10618600.2017.1390471}.
+
+\subsection{Exact methods}
+
+Exact methods that guarantee to find the global optimum are mostly based on Branch-and-Bound (BnB) or semidefinite relaxations. A common formulation, closely related to the TLS objective, is the
+Maximum Consensus (MC), one where the number of inliers is maximized. Branch-and-Bound has been proposed for rotation-only solving of this problem \cite{4408896, 10.1007/978-3-642-37444-9_42}. Globally optimal methods based on BnB have usually been slow, even when searching over a 2D rotation \cite{9447984} using nested BnB approaches.
+
+Another class of methods uses tight convex relaxations based on Semidefinite Programs (SDPs). In their follow-up work, Yang et al. \cite{9785843} propose a sparse SPD relaxation for (among other problems) the full 6-DoF TLS point cloud registration problem and also a fast rank-1 SDP solver \textit{STRIDE}. They can solve synthetic instances with $N=100$ points to global optimality with up to 80\% outlier rate, but require over 200 seconds. SDPs have been used for similar problems such as multiple point cloud registration \cite{9157383}, but with similarly large runtimes.
+
+
+
+
