@@ -146,7 +146,18 @@ This constrained problem can be solved can still be solved very efficiently by u
 
 \subsection{Minimizing the WLS-relaxation over translations}
 
-To minimize the WLS-relaxation over the translation $\mathbf{t}$ for obtaining the lower bound over the ball with center $\mathbf{c}$ and radius $n_r$, we need to solve the following optimization problem:
+The problem of minimizing the WLS-relaxation over a ball $\{ \mathbf{t} : || \mathbf{c} - \mathbf{t} || \leq n_r \}$ of translations is:
+\begin{equation}
+	\label{eq:tls-twls-constrained}
+	\begin{aligned}
+		\argmin_{\mathbf{x} \in \Rone^3} \quad &\sum_{i=1}^{N} w_i ||\mathbf{a}_i - \mathbf{b}_i + \mathbf{c} - \mathbf{t}||_2^2 \\
+		\text{subject to} \quad  &||\mathbf{c} - \mathbf{t}||_2 \leq n_r
+	\end{aligned}
+\end{equation}
+
+The ball center $\mathbf{c}$ is the center of the BnB node that has a radius $n_r$. 
+The constraint $||\mathbf{c} - \mathbf{t}||_2 \leq n_r$ therefore ensures  that the found $\mathbf{t}$ is inside the BnB node. Note that compared to the definition of the convex relaxation \ref{eq:tls-wls-relaxation1}, two constant sums disappeared because they are constant (i.e. they do not depend on $\mathbf{t}$). 
+We can write this problem equivalently as:
 \begin{equation}
 	\label{eq:tls-twls-constrained}
 	\begin{aligned}
@@ -154,19 +165,15 @@ To minimize the WLS-relaxation over the translation $\mathbf{t}$ for obtaining t
 		\text{subject to} \quad  &||\mathbf{x}||_2 \leq n_r
 	\end{aligned}
 \end{equation}
-
-where 
+with 
 \begin{equation}
 	\begin{aligned}
-		\mathbf{x} = \mathbf{c} - \mathbf{t}  \iff  \mathbf{t} = \mathbf{c} - \mathbf{x}\\
-		\mathbf{d}_i = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}
+		\mathbf{x} = \mathbf{c} - \mathbf{t}, \quad \mathbf{d}_i = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}
 	\end{aligned}
 \end{equation}
 
-The constraint $||\mathbf{x}||_2 \leq n_r$ ensures that the found $\mathbf{x}$ is inside the BnB node. The other sums of the convex relaxation \ref{eq:tls-wls-relaxation1} disappeared because they are constant (i.e. they do not depend on $\mathbf{x}$). This problem is a convex QCQP and therefore solvable by any standard QCQP solver. However, we show that the solution can be obtained even more easily in closed form, which in practice results in a much faster algorithm.
-
-We first form the Lagrangian to account for the constraint (which is squared): 
-
+This problem can be solved easily in closed form.
+We first form the Lagrangian to account for the constraint:
 \begin{equation}
 	\begin{aligned}	
 		L(\mathbf{x}, \lambda) =  \sum_{i=1}^{N} w_i ||\mathbf{d}_i - \mathbf{x}||_2^2 + \lambda (
