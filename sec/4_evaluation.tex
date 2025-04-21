@@ -79,3 +79,48 @@ We evaluate our method on the KITTI odometry dataset \cite{Kitti-Geiger2013IJRR}
 We sub-sample the correspondeces to 500 and set the inlier-threshold to $\epsilon = 0.6$. We set a time limit of 100 milliseconds. The FCGF \cite{9009829} descriptor has on average an outlier-rate of 75\%, while the FPFH has usually above 90\% outlier-rate. For the other methods, we report the results from \cite{zhang20233d} since the test setup is identical. The results are shown in Tab. \ref{tab:eval-kitti}, our method achieves comparable results to other state-of-the-art methods without dataset-specific tuning of parameters, outperformed only by MAC and SC$^2$-PCR.
 
 
+
+
+\section{Experimentelle Evaluation}
+
+In diesem Abschnitt wird die vorgeschlagene konvexe Relaxierung evaluiert hinsichtlich ihres Rechenaufwands und der Qualität. Wir messen die Qualität anhand der Anzahl der Iterationen, die Branch-and-Bound (BnB) benötigt, um zu terminieren. Zu diesem Zweck haben wir einen einfache Variante von best-first-BnB implementiert, so wie in \cite{10.1007/978-3-642-37444-9_42}.
+
+Wir haben die Methode in C++ unter Verwendung der \textit{Eigen}\footnote{https://eigen.tuxfamily.org/} Matrix-Bibliothek implementiert. Wir haben die Implementierung so optimiert, dass die Auswertung trigonometrischer Funktionen durch die Verwendung trigonometrischer Identitäten entfällt. Auf diese Weise erfordert die Berechnung der WLS-Relaxierung nur elementare Berechnungen und eine Quadratwurzel-Berechnung pro Punkt.
+Unsere Implementierung verwendet keine Parallelisierung.
+Wir messen die Gesamtzeit für BnB und definieren die $y$-Suboptimalität $y_{subopt}$ als die Suboptimalität des Wertes der Zielfunktionen basierend auf der aktuellen unteren (LB) und oberen Schranke (UB) von BnB \cite{Misener2013}:
+
+
+\begin{align}
+	y_{subopt} = \frac{\text{UB} - \text{LB}}{|\text{LB}|}
+\end{align}
+
+Wir setzen die Bedingung für Terminierung von BnB bei $y_{subopt} < 10^{-4}$ so wie in \cite{Misener2013}.
+Wir haben die Experimente auf einem PC mit Intel i7-12700K-CPU und 32GiB~RAM durchgeführt.   
+\subsection{Synthetische Experimente}
+
+Mittels synthetischen Experimenten können wir leicht die Robustheit gegenüber Ausreißern testen. 
+Wir haben Instanzen für das Optimierungsproblem Gl. \ref{eq:pcr-tls} erzeugt, indem wir zuerst Punkte für die korrekten Messungen aus einer Gleichverteilung gesampled haben wie in \cite{Yang20tro-teaser}. Diese korrekten Punkte werden danach skaliert um den Faktor $30$ um ein realistisches Verhältnis aus Ausdehnung (Größe) der Punktwolke und Messgenauigkeit zu erhalten. 30m ist dabei der kleinste zu erwartende Abstand, in dem noch Punkte von einem LiDAR-sensor detektiert werden. Üblich haben LiDAR-Sensoren eine Reichweite von über 100m. 
+Als nächstes wird das Messrauschen simuliert, indem aus einer Gleichverteilung im Intervall der Rauschgrenze $\epsilon$ gesampled wird und diese Werte zu jedem Punkt addiert werden. Zuletzt werden Ausreißer-Punkte simuliert, indem von einer Gleichverteilung innerhalb der bounding box der korrekten Punkte gesampled wird. 
+
+\subsection{Ergebnisse}
+
+\begin{figure}[!ht]
+	\centering
+	\begin{adjustbox}{width=1.\linewidth}
+		\includegraphics{figures/robust_wahba_runtime_rotation_error.pdf}
+		\end{adjustbox}
+		\caption{Der durchschnittliche Rotationsfehler in Abhängigkeit vom Anteil der Ausreißer: Unsere Methode bleibt robust bis zu 95\% Ausreißer, wie von der Truncated Least Squares Formulierung zu erwarten ist.}
+		\label{fig:rotation-error-over-outlier-rate}
+\end{figure}
+
+
+\begin{figure}[!ht]
+	\centering
+	\begin{adjustbox}{width=1.\linewidth}
+		\includegraphics{figures/robust_wahba_runtime_execution_time.pdf}
+	\end{adjustbox}
+	\caption{Die durchschnittliche Ausführungszeit von Branch-and-Bound in Abhängigkeit von der Gesamtzahl der Punkte $N$ des Optimierungsproblems.}
+	\label{fig:runtime}
+\end{figure}
+
+Wir haben eine Ausreißer-Rate von bis zu $95\%$ untersucht. Für jede evaluierte Rate und Datengröße wurden 100 Stichproben generiert. Die Ergebnisse des Rotationsfehlers in Abhängigkeit von der Ausreißer-Rate sind in Abb. \ref{fig:rotation-error-over-outlier-rate} dargestellt. Die Schätzung bleibt korrekt mit einem geringen Fehler von unter $1$ Grad. Wir haben auch die Skalierbarkeit unserer Methode über die Gesamtzahl der Punkte $N$ untersucht. Wie die Ergebnisse in Abb. \ref{fig:runtime} zeigen, kann unser Ansatz mit einer Laufzeit von unter 100 Millisekunden sogar für Echtzeitanwendungen eingesetzt werden.
