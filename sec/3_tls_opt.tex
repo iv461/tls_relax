@@ -146,11 +146,11 @@ This constrained problem can be solved can still be solved very efficiently by u
 
 \subsection{Minimizing the WLS-relaxation over translations}
 
-The problem of minimizing the WLS-relaxation over a ball $\{ \mathbf{t} : || \mathbf{c} - \mathbf{t} || \leq n_r \}$ of translations is:
+The problem of minimizing the WLS-relaxation over a ball $\{ \mathbf{t} \in \Rthree : || \mathbf{c} - \mathbf{t} || \leq n_r \}$ of translations is:
 \begin{equation}
 	\label{eq:tls-twls-constrained}
 	\begin{aligned}
-		\argmin_{\mathbf{x} \in \Rone^3} \quad &\sum_{i=1}^{N} w_i ||\mathbf{a}_i - \mathbf{b}_i + \mathbf{c} - \mathbf{t}||_2^2 \\
+		\argmin_{\mathbf{t} \in \Rone^3} \quad &\sum_{i=1}^{N} w_i ||\mathbf{a}_i - \mathbf{b}_i + \mathbf{c} - \mathbf{t}||_2^2 \\
 		\text{subject to} \quad  &||\mathbf{c} - \mathbf{t}||_2 \leq n_r
 	\end{aligned}
 \end{equation}
@@ -208,14 +208,22 @@ By rearranging, we can obtain therefore the solution in closed form:
 Now the Karush-Kuhn-Tucker (KKT) conditions require $\lambda \geq 0$ and $\lambda (
 \mathbf{x}^\transposed \mathbf{x} - n_r^2) = 0$ in addition to satisfying the constraint, i.e. $|| \mathbf{x}||_2 \leq n_r$. It follows that in practice we obtain the optimum by first computing $\mathbf{x}$ with Eq. \ref{eq:trans-qcqp-lagrangian}, assuming $\lambda = 0$. Then we check whether the inequality constraint is satisfied, i.e. whether $|| \mathbf{x}||_2 \leq n_r$ holds, and if not, we simply normalise $\mathbf{x}$ so that $|| \mathbf{x}||_2 = n_r$, yielding the optimal solution. Intuitively, from Eq. \ref{eq:trans-qcqp-lagrangian} we already see that the direction of the vector does not change regardless of the optimal Lagrange multiplier $\lambda$ since it is only a scalar factor.  
 
-This optimization problem can be understood as a special case of the Trust Region Problem for which strong duality holds \cite[Ch. 5.2, p.229]{Boyd_Vandenberghe_2004} as well as a regularized linear regression problem.
-
-
+This optimization problem is a special case of the Trust Region Problem for which strong duality holds \cite[Ch. 5.2, p.229]{Boyd_Vandenberghe_2004}.
 
 \subsection{Minimizing the WLS-relaxation over rotations}
 
-To minimize the convex relaxation over rotations and obtain a lower bound for given BnB-node that is a ball with center $\mathbf{R_c}$ and (geodesic) radius $n_r$, we need to solve the following optimization problem:
+To problem of minimizing the WLS relaxation over a geodesic ball of rotations $\{\mathbf{R} \in \SOthree:  d_{\angle}(\mathbf{R}_c, \Delta\mathbf{R}) \leq n_r\}$ is:
 
+\begin{equation}
+	\label{eq:tls-rwls}
+	\begin{aligned}
+		\argmin_{\mathbf{R} \in \SOthree}  \quad &\sum_{i=1}^{N} w_i ||\mathbf{R}\mathbf{p}_i - \mathbf{q}_i ||_2^2 \\
+		\text{subject to} \quad &d_{\angle}(\mathbf{R}_c, \Delta\mathbf{R}) \leq n_r
+	\end{aligned}
+\end{equation}
+
+where $\mathbf{R_c}$ is the ball center and $n_r$ is the radius, as in the translation case. $d_{\angle}(\cdot)$ is the geodesic (also called angular) distance.
+We can write this problem equivalently (due to the bi-invariance of the metric over $\SOthree$) as:
 \begin{equation}
 	\label{eq:tls-rwls}
 	\begin{aligned}
@@ -224,28 +232,21 @@ To minimize the convex relaxation over rotations and obtain a lower bound for gi
 	\end{aligned}
 \end{equation}
 
-Where $\Delta\mathbf{R}$ is the rotation relative to the node's center: 
+
+Where $\Delta\mathbf{R}$ is the rotation relative to the node's center and $\mathbf{I}$ is the identity rotation:  
 
 \begin{equation}
 	\begin{aligned}
-		\Delta\mathbf{R} = \mathbf{R_c}^\transposed\mathbf{R} \iff \mathbf{R_c}\Delta\mathbf{R} = \mathbf{R}
+		\Delta\mathbf{R} = \mathbf{R_c}^\transposed\mathbf{R} 
 	\end{aligned}
 \end{equation}
 
-The unconstrained version of this problem is known as the \textit{Wahba-problem} for which a simple SVD-algorithm exists, known as the Kabsch-Umeyama algorithm \cite{Kabsch-1978-Point-set-alignment} \cite{Least-squares-estimation-point-sets-Umeyama-1991} \cite{Lawrence2019APA}. But this problem is modified and has in addition an inequality-constraint. In the following, we develop a custom solver that solves this problem very efficiently. 
+The unconstrained version of this problem is known as the \textit{Wahba-problem} for which a simple SVD-algorithm exists \cite{Kabsch-1978-Point-set-alignment} \cite{Lawrence2019APA} \cite{Least-squares-estimation-point-sets-Umeyama-1991}. This problem however is modified and has additionally an inequality-constraint. We show that this problem can be solved computationally very efficient using a custom active-set solver.
 
-The first idea is to just try to solve the unconstrained version and check whether it satisfies the inequality constraint (i.e. the solution is inside the ball). 
-We can do that, but unfortunately the solution does not always satisfy the inequality constraint. We gain however an important insight: If the solution satisfies the constraint and lies therefore in the spherical region, we have already found the optimum of the constrained problem. If however the optimum of the unconstrained problem is outside of the region, the optimal solution to the constrained problem has to lie on the border of the region. It then has to satisfy the constraint as an equality, i.e. $ d_{\angle}(\mathbf{I}, \Delta\mathbf{R})  = n_r$ \cite[Ch.15 p.424-427]{Numerical-Optimization-Nocedal-Wright}.
-This two-stage method for solving inequality-constrained nonlinear problems is known as the \textit{active-set} method \cite[Ch. 16.5, p.467]{Numerical-Optimization-Nocedal-Wright}, an inequality constraint is set to be active if the solution satisfies it as an equality. 
+The idea of the active set method is based on the observation that every inequality constraint can either be ignored or is satisfied as an equality (also called complementary slackness condition) \cite[Ch.15 p.424-427]{Numerical-Optimization-Nocedal-Wright}. We therefore first solve the problem using the SVD algorithm and thereby ignoring the constraint. Then, we simply check whether the constraint is satisfied. If yes, we already have found the solution. If not, we know that we need to find a 3D rotation that has a rotation angle equal to $n_r$. By the Euler theorem, every 3D rotation can be described as a rotation around a single axis and an single angle. Because we know that the rotation angle needs to be $n_r$, we therefore only need to find the rotation axis.
 
-Using this active-set approach, we can effectively solve this inequality-constrained optimization problem, since we already have the SVD-algorithm for the unconstrained case. And for equality-constrained case, we make the observation that by Euler's theorem that says that every 3D-rotation can be separated into a n axis and angle, we only have to optimize over the axis when the angle is equality-constrained and therefore fixed.
-
-As an algorithm outline, we therefore first solve the unconstrained problem with the SVD-algorithm and check whether it satisfies the inequality-constraint. If not, we solve for the equality-constrained problem where we seek for the rotation that has the rotation angle $n_r$, that is more difficult case.
-
-
-\subsection{Solving the equality-constrained case}
-
-If the inequality-constraint is not satisfied after the first unconstrained solve, we need to solve the problem with equality-constraint, that is the following optimization problem: 
+\subsubsection{Solving the equality-constrained case}
+In the equality-constrained case of the active-set solver, we need to find a 3D rotation with a rotation angle of exactly $n_r$:
 
 \begin{equation}
 	\label{eq:tls-rwls-eq}
@@ -255,7 +256,7 @@ If the inequality-constraint is not satisfied after the first unconstrained solv
 	\end{aligned}
 \end{equation}
 
-We show that this optimization problem is equivalent to the following problem that finds the optimal axis of rotation $\mathbf{n}^*$:
+We show that this optimization problem is equivalent to the following problem over the axis of rotation:
 
 \begin{equation}
 	\begin{aligned}
@@ -265,10 +266,10 @@ We show that this optimization problem is equivalent to the following problem th
 	\end{aligned}
 \end{equation}
 
-with the data matrices $\mathbf{A}$ and $\mathbf{g}$ that depend on the points $\mathbf{a}_i$ and $\mathbf{b}_i$ and the angle constraint $n_r$. A definition is given in the Appendix \ref{thm:constrained-wahba-davenport}.
+The data matrices $\mathbf{A}$ and $\mathbf{g}$ depend on the points $\mathbf{a}_i$ and $\mathbf{b}_i$ and the angle constraint $n_r$. A definition is given in the Appendix \ref{thm:constrained-wahba-davenport}.
 
-To solve this non-convex optimization problem \ref{eq:eq-constrained-prob-ev} over the sphere, we use the algorithm proposed in \cite{10.1007/978-3-642-75536-1_57}. We perform overall two steps: We first need to compute the eigenvalue decomposition  $\mathbf{A} = \mathbf{Q}\mathbf{\Lambda}\mathbf{Q}^\transposed$ and then need to find the rightmost root of a certain rational function (characteristic polynomial). This can be done in practice very fast, yielding a constant time algorithm.
+To solve this non-convex optimization problem \ref{eq:eq-constrained-prob-ev} over the sphere, we use the algorithm proposed in \cite{10.1007/978-3-642-75536-1_57}. We perform overall two steps: We first need to compute the eigenvalue decomposition  $\mathbf{A} = \mathbf{Q}\mathbf{\Lambda}\mathbf{Q}^\transposed$ and then need to find the rightmost root of a certain rational function (a characteristic polynomial). This can be done in practice very fast, yielding a constant time algorithm.
 
 
-Our active-set solver for finding the global minimum of the WLS-relaxation over rotations is is overall very efficient. The only computationally intensive operation is the computation of the $3 \times 3$ cross-correlation matrix $\mathbf{B}$ (line 13) that has linear runtime in the number of points. All the operations that follow are based on this $3 \times 3$ matrix and therefore have a constant runtime (i.e. independent of the number of points). (For example, the eigen-decomposition (line 3) takes only around $10 \mu s$ while the computation of the cross-correlation matrix requires aroundd $500 \mu s$ for 10k points.)
+Our active-set solver for finding the global minimum of the WLS-relaxation over rotations is is overall very efficient. The only computationally intensive operation is computing the $3 \times 3$ cross-correlation matrix that is needed first by the SVD algorithm. It has a linear runtime in the number of points. All the operations that follow are based on this $3 \times 3$ matrix and therefore have a constant runtime (i.e. independent of the number of points). (For example, the eigen-decomposition (line 3) takes only around $10 \mu s$ while the computation of the cross-correlation matrix requires aroundd $500 \mu s$ for 10k points.)
 This solver is novel to our knowledge -- the problem of solving the Wahba-problem with inequality-constrained angle has not been proposed in the literature before.
