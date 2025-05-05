@@ -101,6 +101,7 @@ For a proof of this WLS-relaxation, see \ref{proof:tls-convex-wls-relaxation}.
 
 In the following we show how $r_{min}$ and $r_{max}$ can easily be computed analytically for different models (i.e. translation and rotation), given spherical intervals, i.e. balls.
 
+\subsubsection{Translation}
 The minimum $r_{min}^i$ and maximum $r_{max}^i$ of the residual $r_i =||\mathbf{a}_i - \mathbf{b}_i + \mathbf{t}||_2^2$ (translation) over a ball with center $\mathbf{c}$ and radius $n_r$ are: (see \ref{proof:tls-relax-minmax-r} for a proof):
 
 \begin{equation}
@@ -117,6 +118,8 @@ with $\mathbf{d}_i$ defined as:
 		\mathbf{d}_i = \mathbf{a}_i - \mathbf{b}_i + \mathbf{c}
 	\end{aligned}
 \end{equation}
+
+\subsubsection{Rotation}
 
 Similarly, for the rotation residual $||\mathbf{a}_i - \mathbf{R}\mathbf{b}_i ||_2^2$ over a over a ball with center $\mathbf{R}_c$ and (geodesic) radius $n_r$ they are (see \ref{proof:wls-interval-analysis-rotation} for a proof): 
 
@@ -138,11 +141,22 @@ where $\theta$ is the angle between $\mathbf{R}_c^\transposed \,\mathbf{a}_i$ an
 
 Computing these intervals requires constant time and is in practice very fast when using trigonometric identities to elimitade the the need for evaluating the cosine function.
 
+\subsubsection{Rotation and Translation (3D-transform)}
+
+To solve the full 6DoF problem, we will need the residual interval over a translation ball and \textit{any} rotation, later it  will become aparent why no rotation ball is needed.
+
+The minimum over all translations $\vt \in B^t(\vc) := \{\vt \in \Rthree: \norm{\vc - \vt}_2 \leq n_r\}$ for all $\vp, \vq \in \Rthree$ is
+\begin{equation}
+	\begin{aligned}
+		&\min_{\MR \in \SOthree, \vt \in B^t(\vc)} \normsq{\MR \vp - \vq + \vt}\\
+		&= \max \left(  0, | \norm{\vp} - \norm{\vq + \vc} | - n_r \right)^2
+	\end{aligned}
+\end{equation}
 
 \section{Minimizing the WLS convex relaxation}
 After having computed the WLS relaxation (i.e. the weights), we need to minimize it to obtain a lower bound on the TLS objective. 
-Since the relaxation is a simple weighted least squares function, minimizing it is rather easy. The only thing we need to consider is that we seek the minimum that is inside the Branch and Bound node. We therefore need to introduce an inequality constraint into the problem.
-This constrained problem can be solved can still be solved very efficiently by utilizing custom active-set solvers that are only slightly more expensive than solving the least-squares problem.
+Since the relaxation is a simple weighted least squares function, minimizing it is rather easy. The only thing we need to consider is that we seek the minimum that is inside the Branch and Bound node. We therefore need to introduce an inequality constraint into the minimization problem.
+This constrained problem still can be solved very efficiently by utilizing custom active-set solvers, they are only slightly more expensive than solving the least-squares problem.
 
 \subsection{Minimizing the WLS-relaxation over translations}
 

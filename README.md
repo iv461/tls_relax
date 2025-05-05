@@ -16,4 +16,6 @@ of the overall solver
 
 - Compare with STRIDE regarding rotation-only solving: Our solver is much faster ! 
 
-- Conclusion: 
+- Conclusion: Fast convex relaxations can be regarded as a special case of tight convex relaxations: When the relax is tight,
+
+- Another advantage compared to tight convex relaxations: Our solver can solve all instances, not only the ones below 90% outlier rate. Instances where the outlier rate exceeds 90 % simply cannot be solved using the SDP relaxations: 
