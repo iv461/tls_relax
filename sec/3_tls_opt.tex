@@ -11,6 +11,7 @@ The problem is to compute a 3D-transform $(\MR^*, \vt^*) \in \SEthree$ that opti
 	\label{fig:tlscostmulterm}
 \end{figure}
 
+
 The Truncated Least Squares (TLS) problem is a least squares estimation problem where residuals are truncated above a threshold. (It is similar to the Maximum Consensus problem but additionally considers the residual values, obtaining slightly better estimates.)
 Outliers are handled by truncating residuals above a threshold $\epsilon^2$, the objective function is therefore:
 
@@ -218,8 +219,8 @@ By rearranging, we can obtain therefore the solution in closed form:
 	\end{aligned}
 \end{equation}
 
-Now the Karush-Kuhn-Tucker (KKT) condition of complementary slackness requires $\lambda \geq 0$ and $\lambda (
-\mathbf{x}^\transposed \mathbf{x} - n_r^2) = 0$ in addition to satisfying the constraint, i.e. $|| \mathbf{x}||_2 \leq n_r$. It follows that we can obtain the optimum by first computing $\mathbf{x}$ with Eq. \ref{eq:trans-qcqp-lagrangian}, assuming $\lambda = 0$. Then we check whether the inequality constraint is satisfied, i.e. whether $|| \mathbf{x}||_2 \leq n_r$ holds, and if not, we simply normalize $\mathbf{x}$ so that it has the norm $n_r$. In other words, we see already from Eq. \ref{eq:trans-qcqp-lagrangian} that the Lagrange multiplier does not change the direction of $\mathbf{x}$, only its length.
+Now the Karush-Kuhn-Tucker (KKT) conditions require $\lambda \geq 0$ and $\lambda (
+\mathbf{x}^\transposed \mathbf{x} - n_r^2) = 0$ in addition to satisfying the constraint, i.e. $|| \mathbf{x}||_2 \leq n_r$. It follows that in practice we obtain the optimum by first computing $\mathbf{x}$ with Eq. \ref{eq:trans-qcqp-lagrangian}, assuming $\lambda = 0$. Then we check whether the inequality constraint is satisfied, i.e. whether $|| \mathbf{x}||_2 \leq n_r$ holds, and if not, we simply normalise $\mathbf{x}$ so that $|| \mathbf{x}||_2 = n_r$, yielding the optimal solution. Intuitively, from Eq. \ref{eq:trans-qcqp-lagrangian} we already see that the direction of the vector does not change regardless of the optimal Lagrange multiplier $\lambda$ since it is only a scalar factor.  
 
 This optimization problem is a special case of the Trust Region Problem for which strong duality holds \cite[Ch. 5.2, p.229]{Boyd_Vandenberghe_2004}.
 
@@ -261,6 +262,7 @@ The idea of the active set method is based on the observation that every inequal
 Our active-set solver for finding the global minimum of the WLS-relaxation over rotations is is overall very efficient. The only computationally intensive operation is computing the $3 \times 3$ cross-correlation matrix that is needed first by the SVD algorithm. It has a linear runtime in the number of points. All the operations that follow are based on this $3 \times 3$ matrix and therefore have a constant runtime (i.e. independent of the number of points).
 This solver is novel to our knowledge -- the problem of solving the Wahba-problem with inequality-constrained angle has not been proposed in the literature before.
 
+
 \subsubsection{Solving the equality-constrained case}
 In the equality-constrained case of the active-set solver, we need to find a 3D rotation with a rotation angle of exactly $n_r$:
 
@@ -284,4 +286,4 @@ We show that this optimization problem is equivalent to the following problem ov
 
 The data matrices $\mathbf{A}$ and $\mathbf{g}$ depend on the points $\mathbf{a}_i$ and $\mathbf{b}_i$ and the angle constraint $n_r$. A definition is given in the Appendix \ref{thm:constrained-wahba-davenport}.
 
-To solve this non-convex optimization problem \ref{eq:eq-constrained-prob-ev} over the sphere, we use the algorithm proposed in \cite{10.1007/978-3-642-75536-1_57}. We perform overall two steps: We first compute the eigenvalue decomposition $\mathbf{A} = \mathbf{Q}\mathbf{\Lambda}\mathbf{Q}^\transposed$ and then find the rightmost root of a certain rational function (a characteristic polynomial). This can be done in practice very fast, yielding a constant time algorithm.
+To solve this non-convex optimization problem \ref{eq:eq-constrained-prob-ev} over the sphere, we use the algorithm proposed in \cite{10.1007/978-3-642-75536-1_57}. We perform overall two steps: We first need to compute the eigenvalue decomposition  $\mathbf{A} = \mathbf{Q}\mathbf{\Lambda}\mathbf{Q}^\transposed$ and then need to find the rightmost root of a certain rational function (a characteristic polynomial). This can be done in practice very fast, yielding a constant time algorithm.
