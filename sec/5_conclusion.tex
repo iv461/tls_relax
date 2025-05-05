@@ -2,8 +2,10 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-In this paper, we presented a general approach of minimizing the Truncated Least Squares (TLS) objective motivated by the geometry of the problem. We showed how intersection graphs allow for an elegant formulation of the combinatorial problem and how the global minimum can be found among the maximal cliques. We showed that surprisingly, the previously studied compatibility graphs motivated by problem-specific geometric observations lead to these special classes of graphs, namely the intersection graphs. 
-We give a sufficient condition under which the global optimum is a maximal clique and discuss cases where subcliques may be the global minimum.
-Unfortunately, we were not able to fully prove that we can detect all conditions under which subcliques may be the global optimum.
-We think that a better understanding of the $\SEthree$-manifolds and their geometry including their combinatorial properties could lead to efficient algorithms for detecting such cases.
+In this paper, we presented a general approach of minimizing the Truncated Least Squares (TLS) objective function 
+using a fast linear time convex relaxation and Branch-and Bound. Our convex relaxation is general and can be applied for every model such as translation, rotation and rigid transform as long as residual intervals can be computed. We gave a full proof
+for the correctness of the relaxation, which is the main part of the proof of global optimality of a BnB algorithm.
+Our evaluation shows that the cost to compute and minimize the relaxation is in the single milliseconds range, allowing to solve the 
+translation and rotation-only problem two orders of magnitude faster than with the SoTA SDP-based method STRIDE.
+More work is however needed to solve the full 6DoF rigid transformation problem. Altought our relaxation can be applied here as well, branching over the 6D space is overall too slow. Further work in this direction will focus on contracting the rotation search space given a translation space, so that the search is not excessively inefficient. 
 

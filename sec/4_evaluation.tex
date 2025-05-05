@@ -1,18 +1,20 @@
 
 \section{Experimental evaluation}
 \label{sec:evaluation}
-In this section we evaluate our Branch and Bound solver that uses our novel convex relaxation on point cloud registration and related outlier robust problems. 
-We measure the required number of iterations as well as the per-iteration costs. For this we have implemented a simple version of a best-first Branch-and-Bound as in \cite{10.1007/978-3-642-37444-9_42}.
+In this section we evaluate a Branch and Bound solver that uses our novel convex relaxation on point cloud registration and related outlier robust problems. We have implemented a basic version of BnB using best-first search. To branch over the spherical space of 3D rotations, we use rotation vector approach as in \cite{10.1007/978-3-642-37444-9_42}.
 
-We also have validated the corecteness of the algorithm and it's implementation empirically: We did not find any instance in which it did not find the global minimum of the TLS problem.
+We also have validated the correctness of the algorithm and it's implementation empirically: We did not find any instance in which the lower bound was invalid, i.e. higher than the ground-truth global minimum. 
 
 We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32GiB of RAM.
+
+\subsection{Translation experiments}
+We evaluate solving the translation and the rotation problem separately. 
 
 \subsection{Synthetic experiments}
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.49\linewidth]{figures/execution_time_over_outlier_rate_boxplot}
-	\includegraphics[width=0.49\linewidth]{figures/rotation_error_over_outlier_rate.pdf}
+%	\includegraphics[width=0.49\linewidth]{figures/execution_time_over_outlier_rate_boxplot}
+%	\includegraphics[width=0.49\linewidth]{figures/rotation_error_over_outlier_rate.pdf}
 	\caption{Execution time and rotation error over different outlier rates with $N=100$ on synthetic data.}
 	\label{fig:execution-time-over-outlier-rate}
 \end{figure}
@@ -20,19 +22,13 @@ We perform the experiments on a desktop PC with an Intel i7 12700KF CPU and 32Gi
 
 \begin{figure}[!ht]
 	\centering
-	\begin{adjustbox}{width=1.\linewidth}
-		\includegraphics{figures/robust_wahba_runtime_rotation_error.pdf}
-	\end{adjustbox}
-	\caption{Rotation-only experiments: The average rotation error over the ourlier rate: The Truncated Least Squares method is robust up to 95\% outliers.}
+	\caption{Rotation-only experiments: The average rotation error over the outlier rate: The Truncated Least Squares method is robust up to 95\% outliers.}
 	\label{fig:rotation-error-over-outlier-rate}
 \end{figure}
 
 
 \begin{figure}[!ht]
 	\centering
-	\begin{adjustbox}{width=1.\linewidth}
-		\includegraphics{figures/robust_wahba_runtime_execution_time.pdf}
-	\end{adjustbox}
 	\caption{Average runtime of our Branch-and-Bound solver depending on the total amount of point correspondences $N$.}
 	\label{fig:runtime}
 \end{figure}
@@ -45,15 +41,18 @@ The results of the rotation error as a function of the outlier rate are shown in
 \subsubsection{Scalability}
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.9\linewidth]{figures/scalability-synth}
+	%\includegraphics[width=0.9\linewidth]{figures/scalability-synth}
 	\caption{Scalability on synthetic data, outlier rate $75\%$}
 	\label{fig:execution-time-over-n}
 \end{figure}
 
 We evaluate the scalability on synthetic data at $75\%$ outlier-rate, results are shown in Fig \ref{fig:execution-time-over-n}. Our solves is efficient since it implicitly prunes vertices based on the TLS objective.
 
-\subsubsection{Validity of the global optimality certificate}
+\subsection{Rotation experiments}
+We solve the rotation-only truncated least squares problem with the same approach as the translation problem: We use the same BnB solver and convex relaxation, only the computation of the residual intervals changes, as well as the minimization of the relaxation function.
 
+
+\subsubsection{Validity of the global optimality certificate}
 We test on synthetic data whether the global optimality certificate is valid, i.e. whether at termination, the lower bound is less or equal than the TLS objective at the ground-truth solution.
 We define the suboptimality $\eta$ of the solution based on the upper bound (UB), that is, the best known solution, and the lower bound (LB) \cite{9785843}
 \begin{equation}
@@ -61,11 +60,12 @@ We define the suboptimality $\eta$ of the solution based on the upper bound (UB)
 		\eta = \frac{\text{UB} - \text{LB}}{1 + |\text{UB}| + |\text{LB}|}
 	\end{aligned}
 \end{equation}
-We test with $N=100$, $\epsilon=0.5$ and vary the data scale $s$ from 3 to 100. We test for each scale outlier rates of $0\%, 30\%, 50\%, 90\%, 96\%$, and do 1000 trials for each combination.
+We test with $N=100$, $\epsilon=0.5$ and vary the data scale $s$ from 3 to 100. We test for each scale variation the outlier rates $0\%, 30\%, 50\%, 90\%, 96\%$. We do 1000 trials for each such parameter set.
+
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.49\linewidth]{figures/certificate_validity_vs_scale}
-	\includegraphics[width=0.49\linewidth]{figures/eta_subopt_over_outlier_rate}
+	%\includegraphics[width=0.49\linewidth]{figures/certificate_validity_vs_scale}
+	%\includegraphics[width=0.49\linewidth]{figures/eta_subopt_over_outlier_rate}
 	\caption{Amount of instances with valid global optimality certificate (i.e. valid suboptimality) on synthetic data, including achieved $\eta$-suboptimality.}
 	\label{fig:cert-validity}
 \end{figure}
@@ -77,24 +77,24 @@ We set $\epsilon = 0.5$, $N=30$ and perform three trials per outlier rate.
 
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.49\linewidth]{figures/subopt_stride}
-	\includegraphics[width=0.49\linewidth]{figures/runtime_stride}
+	%\includegraphics[width=0.49\linewidth]{figures/subopt_stride}
+	%\includegraphics[width=0.49\linewidth]{figures/runtime_stride}
 	\caption{The reached suboptimality and the runtime using STRIDE over the outlier rate on synthetic data, $N=30$.}
 	\label{fig:stride-subopt-eval}
 \end{figure}
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.9\linewidth]{figures/rotation_error_stride}
+	%\includegraphics[width=0.9\linewidth]{figures/rotation_error_stride}
 	\caption{Rotation error using STRIDE.}
 	\label{fig:stride-rot-err}
 \end{figure}
 
-The results are shown in Fig. \ref{fig:stride-subopt-eval}, STRIDE is able to find and certify the global optimum as long as the outlier rate is below 90\%. The runtime of STRIDE is even with as few as 30 points in the order of $10^3$ seconds. STRIDE achieves a similar rotation error compared to our solver in instances that could be solved (Fig. \ref{fig:stride-rot-err}). Note that the rotation error is meaningless for instances that STRIDE could not solve (i.e. above 80\%), since it is always able to detect them.
+The results are shown in Fig. \ref{fig:stride-subopt-eval}, STRIDE is able to find and certify the global optimum as long as the outlier rate is below 90\%. The runtime of STRIDE is even with as few as 30 points in the order of $10^3$ seconds. In instances that STRIDE could solve (i.e. where the relaxation is tight), it achieves a similar rotation error compared to our solver (Fig. \ref{fig:stride-rot-err}). Note that the rotation error is meaningless for instances that STRIDE could not solve (i.e. above 80\% outliers).
 
 \subsection{Results on 3DMatch dataset}
 \input{sec/eval-3DMatch-table}
-We evaluate our solver on the 3DMatch dataset \cite{zeng20163dmatch} 
-following \cite{SC2-PCR-Chen-2022-CVPR, zhang20233d} on all scenes. We evaluate the residual rotation (RE) and translation (TE) and the registration recall (RR). A registration is defined as successful if RE $\leq 15$ degrees and TE $\leq 30$ cm. We sub-sample the correspondeces to 500 and set the inlier-threshold to $\epsilon = 0.6$. For the other methods, we report the results from \cite{zhang20233d} since the test setup is identical. The results are shown in Tab. \ref{tab:3DMatch-results}.
+We evaluated our solver on the 3DMatch dataset \cite{zeng20163dmatch} 
+following the same protocol as in \cite{SC2-PCR-Chen-2022-CVPR, zhang20233d}. We use all scenes and evaluate the residual rotation error (RE) and translation error (TE) as well as the registration recall (RR). A registration is defined as successful if RE $\leq 15$ degrees and TE $\leq 30$ cm holds. We sub-sample the correspondences to 500 and set the inlier-threshold to $\epsilon = 0.6$. For the other methods, we report the results from \cite{zhang20233d} since the test setup is identical. The results are shown in Tab. \ref{tab:3DMatch-results}.
 
 \subsection{Results on KITTI dataset}
 \input{sec/eval-kitti-table}
