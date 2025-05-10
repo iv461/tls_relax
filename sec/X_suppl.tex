@@ -298,3 +298,42 @@
 	By the equality constraint, $\theta$ is already given as $\theta = n_r$. Then, the term $ \cos^2 \left(\frac{\theta}{2} \right) \trace(\mathbf{C})$ in Eq. \ref{eq:dv-q-rew} is constant and does not affect the minimizer, we will therefore omit it. 
 	 By defining the data-matrices $\mathbf{A}$ and $\mathbf{g}$ as in the theorem \ref{eq:ev-constr-data-mat-a}, we see that the objective function of Eq. \ref{eq:rot-est-constrained-qcqp} is equivalent to Davenports' problem \ref{eq:davenports-q-problem} and therefore equivalent to \ref{eq:tls-rwls-a}, concluding the proof.
 \end{proof}	
+
+
+\begin{proof}
+	We first form the Lagrangian to account for the constraint:
+	\begin{equation}
+		\begin{aligned}	
+			L(\mathbf{x}, \lambda) =  \sum_{i=1}^{N} w_i ||\mathbf{d}_i - \mathbf{x}||_2^2 + \lambda (
+			\mathbf{x}^\transposed \mathbf{x} - n_r^2)\\
+		\end{aligned}
+	\end{equation}
+	
+	then, we set the first partial derivatives to zero: 
+	\begin{equation}
+		\begin{aligned}	
+			\frac{\partial L}{\partial \mathbf{x}} &= \frac{\partial }{\partial \mathbf{x}} \left( \sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right)^\transposed \left(\mathbf{d}_i - \mathbf{x}\right) + \lambda (
+			\mathbf{x}^\transposed \mathbf{x} - n_r^2) \right)\\
+			&= - 2\sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right) + 2 \lambda \mathbf{x}\\
+			&= \mathbf{0}\\
+		\end{aligned}
+	\end{equation}
+	
+	
+	By rearranging, we can obtain therefore the solution in closed form:
+	\begin{equation}
+		\label{eq:trans-qcqp-lagrangian}
+		\begin{aligned}	
+			-2  &\sum_{i=1}^{N}  w_i \left(\mathbf{d}_i - \mathbf{x}\right) + 2 \lambda \mathbf{x} = \mathbf{0}\\
+			\iff \lambda \mathbf{x} &= \sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right)\\
+			\lambda \mathbf{x} &= \sum_{i=1}^{N}  w_i \mathbf{d}_i  - \sum_{i=1}^{N}  w_i \mathbf{x}\\
+			\lambda \mathbf{x} &= \sum_{i=1}^{N}  w_i \mathbf{d}_i  - \mathbf{x} \sum_{i=1}^{N}  w_i\\
+			\left( \lambda + \sum_{i=1}^{N}  w_i \right) \mathbf{x} &= \sum_{i=1}^{N} w_i \mathbf{d}_i \\
+			\mathbf{x} &= \frac{1}{\lambda + \sum_{i=1}^{N}  w_i} \sum_{i=1}^{N} w_i \mathbf{d}_i 
+		\end{aligned}
+	\end{equation}
+	
+	Now the Karush-Kuhn-Tucker (KKT) conditions require $\lambda \geq 0$ and $\lambda (
+	\mathbf{x}^\transposed \mathbf{x} - n_r^2) = 0$ in addition to satisfying the constraint, i.e. $|| \mathbf{x}||_2 \leq n_r$.
+\end{proof}
+	

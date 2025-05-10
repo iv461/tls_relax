@@ -39,9 +39,9 @@ This problem is a non-convex combinatorial problem that is difficult to solve (r
 The parameter $\epsilon$ is best understood as the known measurement accuracy of each point. It can be estimated by collecting samples, i.e. in a data-driven manner \cite[p.8]{Chin2017TheMC}.
 
 
-\section{Wheighted Least Squares convex relaxation}
+\section{WLS Relaxation: A simple linear time relaxation}
 
-In this section we propose a novel convex relaxation for the Truncated Least Squares problem that can be computed in linear time.
+In this section we propose a novel convex relaxation for the Truncated Least Squares problem that can be computed in linear time and can be minimized by solving a simple weighted least squares problem.
 
 \begin{figure}[!ht]
 	\centering
@@ -59,9 +59,9 @@ First, consider the truncated least squares objective for a general residual ter
 \end{equation}
 
 where $\mathbf{x}_i$ are data points and $r(\cdot)^2$ is some convex residual function such as the squared Euclidean distance $||\mathbf{x} - \mathbf{x}_i||_2^2$. In the following, we will refer to the i-th residual term $r(\mathbf{x}, \mathbf{x_i})^2$ simply as $r_i$.
-The idea of the WLS-relaxation is the observation that this function is only non-convex because of the truncation -- the residuals are convex (parabolas). Since sums of convex functions are convex, we can focus on relaxing each term separately.
+The idea of the WLS-relaxation is the observation that this function is only non-convex because of the truncation -- the residuals itself are convex. Since sums of convex functions are convex, we can focus on relaxing each term separately.
 
-For this, we first find the minimum and maximum values of each residual $r_i$ is over the given interval, denoted as $r_{min}^i$ and $r_{max}^i$ respectively. The key geometric idea of our relaxation is to reweight these residuals such that after reweighting, their maximum becomes $\epsilon^2$ and thus they are not affected by truncation (Fig. \ref{fig:wlsrelaxideawithrelax}).
+For this, we first find the minimum and maximum values of each residual $r_i$ is over a given interval, denoted as $r_{min}^i$ and $r_{max}^i$ respectively. We then re-weight these residuals such that their maximum becomes $\epsilon^2$ and thus they are not truncated over the entire interval (Fig. \ref{fig:wlsrelaxideawithrelax}).
 
 Some additional case handling is required however to ensure that this relaxation becomes tight. This is crucial to ensure that BnB converges in a finite number of iterations. First, all residuals for which  $r_{min} \geq \epsilon^2$ holds are outliers over the entire interval and therefore constant. Similarly, residuals where $r_{max} \leq \epsilon^2$ holds are inliers over the entire interval and do not need to be reweighted.
 
@@ -99,7 +99,7 @@ For a proof of this WLS-relaxation, see \ref{proof:tls-convex-wls-relaxation}.
 
 \subsection{Interval analysis of residuals}
 
-In the following we show how $r_{min}$ and $r_{max}$ can easily be computed analytically for different models (i.e. translation and rotation), given spherical intervals, i.e. balls.
+In the following we show how $r_{min}$ and $r_{max}$ can easily be computed analytically for different models (i.e. translation and rotation), given spherical intervals (balls).
 
 \subsubsection{Translation}
 The minimum $r_{min}^i$ and maximum $r_{max}^i$ of the residual $r_i =||\mathbf{a}_i - \mathbf{b}_i + \mathbf{t}||_2^2$ (translation) over a ball with center $\mathbf{c}$ and radius $n_r$ are: (see \ref{proof:tls-relax-minmax-r} for a proof):
@@ -186,41 +186,17 @@ with
 	\end{aligned}
 \end{equation}
 
-This problem can be solved easily in closed form.
-We first form the Lagrangian to account for the constraint:
+This problem can be solved easily in closed form, obtaining the optimal solution $\mathbf{x}^*$ with: 
+
 \begin{equation}
+	\label{eq:trans-qcqp-sol}
 	\begin{aligned}	
-		L(\mathbf{x}, \lambda) =  \sum_{i=1}^{N} w_i ||\mathbf{d}_i - \mathbf{x}||_2^2 + \lambda (
-		\mathbf{x}^\transposed \mathbf{x} - n_r^2)\\
+		\mathbf{x}^* &= \frac{1}{\lambda^* + \sum_{i=1}^{N}  w_i} \sum_{i=1}^{N} w_i \mathbf{d}_i 
 	\end{aligned}
 \end{equation}
 
-then, we set the first partial derivatives to zero: 
-\begin{equation}
-	\begin{aligned}	
-		\frac{\partial L}{\partial \mathbf{x}} &= \frac{\partial }{\partial \mathbf{x}} \left( \sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right)^\transposed \left(\mathbf{d}_i - \mathbf{x}\right) + \lambda (
-		\mathbf{x}^\transposed \mathbf{x} - n_r^2) \right)\\
-		&= - 2\sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right) + 2 \lambda \mathbf{x}\\
-		&= \mathbf{0}\\
-	\end{aligned}
-\end{equation}
-
-
-By rearranging, we can obtain therefore the solution in closed form:
-\begin{equation}
-	\label{eq:trans-qcqp-lagrangian}
-	\begin{aligned}	
-		-2  &\sum_{i=1}^{N}  w_i \left(\mathbf{d}_i - \mathbf{x}\right) + 2 \lambda \mathbf{x} = \mathbf{0}\\
-		\iff \lambda \mathbf{x} &= \sum_{i=1}^{N} w_i \left(\mathbf{d}_i - \mathbf{x}\right)\\
-		\lambda \mathbf{x} &= \sum_{i=1}^{N}  w_i \mathbf{d}_i  - \sum_{i=1}^{N}  w_i \mathbf{x}\\
-		\lambda \mathbf{x} &= \sum_{i=1}^{N}  w_i \mathbf{d}_i  - \mathbf{x} \sum_{i=1}^{N}  w_i\\
-		\left( \lambda + \sum_{i=1}^{N}  w_i \right) \mathbf{x} &= \sum_{i=1}^{N} w_i \mathbf{d}_i \\
-		\mathbf{x} &= \frac{1}{\lambda + \sum_{i=1}^{N}  w_i} \sum_{i=1}^{N} w_i \mathbf{d}_i 
-	\end{aligned}
-\end{equation}
-
-Now the Karush-Kuhn-Tucker (KKT) conditions require $\lambda \geq 0$ and $\lambda (
-\mathbf{x}^\transposed \mathbf{x} - n_r^2) = 0$ in addition to satisfying the constraint, i.e. $|| \mathbf{x}||_2 \leq n_r$. It follows that in practice we obtain the optimum by first computing $\mathbf{x}$ with Eq. \ref{eq:trans-qcqp-lagrangian}, assuming $\lambda = 0$. Then we check whether the inequality constraint is satisfied, i.e. whether $|| \mathbf{x}||_2 \leq n_r$ holds, and if not, we simply normalise $\mathbf{x}$ so that $|| \mathbf{x}||_2 = n_r$, yielding the optimal solution. Intuitively, from Eq. \ref{eq:trans-qcqp-lagrangian} we already see that the direction of the vector does not change regardless of the optimal Lagrange multiplier $\lambda$ since it is only a scalar factor.  
+where the optimal Lagrange multiplier $\lambda^*$ is chosen so that the norm of $\mathbf{x}^*$ is no greater than $n_r$ (see App. for proof).
+It follows that in practice we obtain the optimum by first computing $\mathbf{x}$ with Eq. \ref{eq:trans-qcqp-lagrangian}, assuming $\lambda = 0$. Then we check whether the inequality constraint is satisfied, i.e. whether $|| \mathbf{x}||_2 \leq n_r$ holds, and if not, we simply normalise $\mathbf{x}$ so that $|| \mathbf{x}||_2 = n_r$, yielding the optimal solution. Intuitively, from Eq. \ref{eq:trans-qcqp-lagrangian} we already see that the direction of the vector does not change regardless of the optimal Lagrange multiplier $\lambda$ since it is only a scalar factor.  
 
 This optimization problem is a special case of the Trust Region Problem for which strong duality holds \cite[Ch. 5.2, p.229]{Boyd_Vandenberghe_2004}.
 
